@@ -72,31 +72,27 @@
 #include "sdlemu/sdlemu_filter.h"
 #include "gui/gui.h"
 
+static SDL_Surface* real_surface;
+extern SDL_Joystick* joystick;
+
+extern void upscale_320x240(uint32_t *src, uint32_t *dst, uint32_t height);
+extern void upscale_400x240(uint32_t *src, uint32_t *dst, uint32_t height);
+extern void upscale_480x272(uint32_t *src, uint32_t *dst, uint32_t height);
+
 /*
     This is called also from gui when initializing for rom browser
 */
 int handy_sdl_video_early_setup(int surfacewidth, int surfaceheight, int sdl_bpp_flag, int videoflags)
 {
-    // Setup the main SDL surface
-#ifdef DINGUX
-    {
-        uint32 vm = 0; // 0 - 320x240, 1 - 400x240, 2 - 480x272
-
-        #define NUMOFVIDEOMODES 3
-        struct { uint32 x; uint32 y; } VModes[NUMOFVIDEOMODES] = { {320, 240}, {400, 240}, {480, 272} };
-
-        // check 3 videomodes: 480x272, 400x240, 320x240
-        for(vm = NUMOFVIDEOMODES-1; vm >= 0; vm--) {
-            if(SDL_VideoModeOK(VModes[vm].x, VModes[vm].y, 16, videoflags) != 0) {
-                surfacewidth = VModes[vm].x;
-                surfaceheight = VModes[vm].y;
-                break;
-            }
-        }
-    }
-
-#endif
-    mainSurface = SDL_SetVideoMode(320, 480, 16, videoflags);
+	#ifdef RS97
+	surfacewidth = 320;
+	surfaceheight = 240;
+	#else
+	surfacewidth = 480;
+	surfaceheight = 272;
+	#endif
+	mainSurface = SDL_SetVideoMode(surfacewidth, surfaceheight, 16, videoflags);
+	
     if (mainSurface == NULL)
     {
         printf("Could not create primary SDL surface: %s\n", SDL_GetError());
@@ -120,7 +116,7 @@ int handy_sdl_video_early_setup(int surfacewidth, int surfaceheight, int sdl_bpp
 int handy_sdl_video_setup(int rendertype, int fsaa, int fullscreen, int bpp, int scale, int accel, int sync)
 {
     const    SDL_VideoInfo     *info;
-            Uint32             videoflags;
+            uint32_t             videoflags;
             int              value;
             int                 sdl_bpp_flag;
             int                 surfacewidth;
@@ -256,12 +252,12 @@ int handy_sdl_video_setup(int rendertype, int fsaa, int fullscreen, int bpp, int
     //
     // All the rendering is done in the graphics buffer and is then
     // blitted to the mainSurface and thus to the screen.
-
     HandyBuffer = SDL_CreateRGBSurface(SDL_SWSURFACE,
         LynxWidth,
         LynxHeight,
         sdl_bpp_flag,
         0x00000000, 0x00000000, 0x00000000, 0x00000000);
+	printf("Width %d, Height %d\n", LynxWidth, LynxHeight);
 
     if (HandyBuffer == NULL)
     {
@@ -292,8 +288,8 @@ int handy_sdl_video_setup(int rendertype, int fsaa, int fullscreen, int bpp, int
     SDL_EventState( SDL_MOUSEMOTION, SDL_IGNORE); // Ignoring mouse stuff.
     SDL_ShowCursor( 0 ); // Removing mouse from window. Very handy in fullscreen mode :)
 
-    delta = (uint8*)malloc(LynxWidth*LynxHeight*sizeof(Uint32)*4);
-    memset(delta, 255, LynxWidth*LynxHeight*sizeof(Uint32)*4);
+    delta = (uint8*)malloc(LynxWidth*LynxHeight*sizeof(uint32_t)*4);
+    memset(delta, 255, LynxWidth*LynxHeight*sizeof(uint32_t)*4);
 
     Init_2xSaI (565);
     systemRedShift   = sdlCalculateShift(HandyBuffer->format->Rmask);
@@ -317,7 +313,7 @@ int handy_sdl_video_setup(int rendertype, int fsaa, int fullscreen, int bpp, int
 #ifndef DINGUX
 int handy_sdl_video_setup_opengl(int fsaa,int accel, int sync)
 {
-    Uint32             videoflags;
+    uint32_t             videoflags;
 
     printf("OpenGL\n");
     // Initializing SDL attributes with OpenGL
@@ -381,7 +377,7 @@ int handy_sdl_video_setup_opengl(int fsaa,int accel, int sync)
 #ifndef DINGUX
 int handy_sdl_video_setup_yuv(void)
 {
-    Uint32             videoflags;
+    uint32_t             videoflags;
 
     printf("YUV Overlay\n");
 
@@ -405,14 +401,20 @@ int handy_sdl_video_setup_yuv(void)
 */
 int handy_sdl_video_setup_sdl(const SDL_VideoInfo *info)
 {
-    Uint32             videoflags;
+    uint32_t             videoflags;
 #ifdef DINGUX
-    videoflags = SDL_HWSURFACE | SDL_DOUBLEBUF;
+    videoflags = SDL_HWSURFACE |
+    #ifdef SDL_TRIPLEBUF
+    SDL_TRIPLEBUF
+    #else
+    SDL_DOUBLEBUF
+    #endif
+    ;
 #else
     if (info->hw_available)
     {
         printf("SDL Hardware\n");
-        videoflags = SDL_HWSURFACE | SDL_HWPALETTE | SDL_DOUBLEBUF;
+        videoflags = SDL_HWSURFACE | SDL_HWPALETTE;
 
         if (info->blit_hw) videoflags |= SDL_HWACCEL;
     }
@@ -437,7 +439,7 @@ int handy_sdl_video_setup_sdl(const SDL_VideoInfo *info)
     Information            :    Creates the backbuffer for the Handy core based
                             upon rotation, format, etc.
 */
-UBYTE *handy_sdl_display_fake_callback(ULONG objref);
+uint8_t *handy_sdl_display_fake_callback(uint32_t objref);
 void handy_sdl_video_init(int bpp)
 {
 
@@ -465,8 +467,8 @@ void handy_sdl_video_init(int bpp)
     }
 
     // HandyBuffer must be initialized previously
-    mpLynxBuffer = (Uint32 *)HandyBuffer->pixels;
-    mpLynx->DisplaySetAttributes( LynxRotate, LynxFormat, (ULONG)HandyBuffer->pitch, handy_sdl_display_callback, (ULONG)mpLynxBuffer);
+    mpLynxBuffer = (ULONG *)HandyBuffer->pixels;
+    mpLynx->DisplaySetAttributes( LynxRotate, LynxFormat, (uint32_t)HandyBuffer->pitch, handy_sdl_display_callback, (ULONG)mpLynxBuffer);
 
     printf("[DONE]\n");
 }
@@ -482,370 +484,75 @@ void handy_sdl_video_init(int bpp)
     Information            :    Renders the graphics from HandyBuffer to
                             the main surface.
 */
-UBYTE *handy_sdl_display_fake_callback(ULONG objref)
+uint8_t *handy_sdl_display_fake_callback(uint32_t objref)
 {
-    return (UBYTE *)mpLynxBuffer;
+    return (uint8_t *)mpLynxBuffer;
 }
 
-UBYTE *handy_sdl_display_callback(ULONG objref)
+uint8_t *handy_sdl_display_callback(ULONG objref)
 {
     int filter =  1;
-
-
     // Time to render the contents of mLynxBuffer to the SDL gfxBuffer.
     // Now to blit the contents of gfxBuffer to our main SDL surface.
-#ifdef DINGUX
     handy_sdl_draw_graphics();
     
     // show fps if needed
     gui_ShowFPS();
     SDL_Flip( mainSurface );
-#else
-    switch( rendertype )
-    {
-        case 1:
-            handy_sdl_draw_graphics();
-            SDL_Flip( mainSurface );
-            break;
-        case 2:
-            sdlemu_draw_texture( HandyBuffer, mainSurface, 1/*1=GL_QUADS*/);
-            break;
-        case 3:
-            sdlemu_draw_overlay( HandyBuffer, LynxScale, LynxWidth, LynxHeight);
-        default:
-            handy_sdl_draw_graphics();
-            break;
-    }
-#endif
-
-    return (UBYTE *)mpLynxBuffer;
-}
-
-inline void handy_sdl_draw_filter(int filtertype, SDL_Surface *src, SDL_Surface *dst, Uint8 *delta)
-{
-#ifdef DINGUX
-    Uint8 *dst_offset = (Uint8 *)dst->pixels + (dst->w - 320) + (/*dst->h*/240 - 204) * 2 * dst->w; // fix for retrogame
-
-    switch( filter ) {
-        case 0: break;
-        case 1: TVMode((Uint8 *)src->pixels, src->pitch, delta, dst_offset, dst->pitch, src->w, src->h); break;
-        case 2: _2xSaI((Uint8 *)src->pixels, src->pitch, delta, dst_offset, dst->pitch, src->w, src->h); break;
-        case 3: Super2xSaI((Uint8 *)src->pixels, src->pitch, delta, dst_offset, dst->pitch, src->w, src->h); break;
-        case 4: SuperEagle((Uint8 *)src->pixels, src->pitch, delta, dst_offset, dst->pitch, src->w, src->h); break;
-        case 5: MotionBlur((Uint8 *)src->pixels, src->pitch, delta, dst_offset, dst->pitch, src->w, src->h); break;
-        case 6: Simple2x((Uint8 *)src->pixels, src->pitch, delta, dst_offset, dst->pitch, src->w, src->h); break;
-        case 7: bilinear((Uint8 *)src->pixels, src->pitch, delta, dst_offset, dst->pitch, src->w, src->h); break;
-        case 8: bilinearPlus((Uint8 *)src->pixels, src->pitch, delta, dst_offset, dst->pitch, src->w, src->h); break;
-        case 9: Pixelate((Uint8 *)src->pixels, src->pitch, delta, dst_offset, dst->pitch, src->w, src->h); break;
-        case 10: Average((Uint8 *)src->pixels, src->pitch, delta, dst_offset, dst->pitch, src->w, src->h); break;
-    }
-#else
-    switch( filter ) {
-        case 0: break;
-        case 1: TVMode((Uint8 *)src->pixels, src->pitch, delta, (Uint8 *)dst->pixels, dst->pitch, src->w, src->h); break;
-        case 2: _2xSaI((Uint8 *)src->pixels, src->pitch, delta, (Uint8 *)dst->pixels, dst->pitch, src->w, src->h); break;
-        case 3: Super2xSaI((Uint8 *)src->pixels, src->pitch, delta, (Uint8 *)dst->pixels, dst->pitch, src->w, src->h); break;
-        case 4: SuperEagle((Uint8 *)src->pixels, src->pitch, delta, (Uint8 *)dst->pixels, dst->pitch, src->w, src->h); break;
-        case 5: MotionBlur((Uint8 *)src->pixels, src->pitch, delta, (Uint8 *)dst->pixels, dst->pitch, src->w, src->h); break;
-        case 6: Simple2x((Uint8 *)src->pixels, src->pitch, delta, (Uint8 *)dst->pixels, dst->pitch, src->w, src->h); break;
-        case 7: bilinear((Uint8 *)src->pixels, src->pitch, delta, (Uint8 *)dst->pixels, dst->pitch, src->w, src->h); break;
-        case 8: bilinearPlus((Uint8 *)src->pixels, src->pitch, delta, (Uint8 *)dst->pixels, dst->pitch, src->w, src->h); break;
-        case 9: Pixelate((Uint8 *)src->pixels, src->pitch, delta, (Uint8 *)dst->pixels, dst->pitch, src->w, src->h); break;
-        case 10: Average((Uint8 *)src->pixels, src->pitch, delta, (Uint8 *)dst->pixels, dst->pitch, src->w, src->h); break;
-    }
-#endif
-}
-
-#if 0
-/* Bresenham's upscale routine - SLOW!!! */
-void UpscaleBresenham(Uint16 *src, 
-                      Uint32 src_pitch,
-                      Uint32 src_w, 
-                      Uint32 src_h, 
-                      Uint16 *dst, 
-                      Uint32 dst_pitch, 
-                      Uint32 dst_w, 
-                      Uint32 dst_h)
-{
-    int midw = dst_w / 2 * 3 / 2;
-    int midh = dst_h / 2 * 3 / 2;
-    int Ew = 0;
-    int Eh = 0;
-    int source = 0, target = 0;
-    int dh = 0;
-    int i, j;
     
-    for(i = 0; i < dst_h; i++) {
-        Ew = 0;
-        source = dh * src_w;    
-
-        for(j = 0; j < dst_w; j++) {
-            Uint32 c;
-            
-            c = src[source];
-            
-            #define AVERAGE(z, x) ((((z) & 0xF7DEF7DE) >> 1) + (((x) & 0xF7DEF7DE) >> 1))
-            
-            if((Ew >= midw) && (Eh >= midh)) {
-                c = AVERAGE(src[source+1], src[source+src_w]);
-            } else {
-                if(Ew >= midw) { // average + 1
-                    c = AVERAGE(c, src[source+1]);
-                }
-                if(Eh >= midh) { // average + src_w
-                    c = AVERAGE(c, src[source+src_w]);
-                }
-            }
-                
-            dst[target++] = c;
-            
-            Ew += src_w; if(Ew >= dst_w) { Ew -= dst_w; source += 1; }
-        }
-        
-        Eh += src_h; if(Eh >= dst_h) { Eh -= dst_h; dh++; }
-    }
-}
-#else
-
-/*
-    Upscale 160x102 -> 320x240
-    Horizontal upscale:
-        320/160=2  --  simple doubling of pixels
-        [ab][cd] -> [aa][bb][cc][dd]
-    Vertical upscale:
-        Bresenham algo with simple interpolation
-*/
-void upscale_320x240(Uint32 *src, Uint32 *dst)
-{
-    int midh = 240 / 2 * 3 / 2;
-    int Eh = 0;
-    int source = 0;
-    int dh = 0;
-    int i, j;
-
-    for (i = 0; i < 240; i++)
-    {
-        source = dh * 160 / 2; // atari lynx x / 2 
-
-        for (j = 0; j < 320/8; j++)
-        {
-            Uint32 a, b, c, d, ab, cd;
-
-            __builtin_prefetch(dst + 4, 1);
-            __builtin_prefetch(src + source + 4, 0);
-
-            ab = src[source] & 0xF7DEF7DE;
-            cd = src[source + 1] & 0xF7DEF7DE;
-
-            #define AVERAGE(z, x) ((((z) & 0xF7DEF7DE) >> 1) + (((x) & 0xF7DEF7DE) >> 1))
-            if(Eh >= midh) { // average + 160
-                ab = AVERAGE(ab, src[source+160/2]);
-                cd = AVERAGE(cd, src[source+160/2+1]);
-            }
-            #undef AVERAGE
-
-            a = (ab & 0xFFFF) | (ab << 16);
-            b = (ab & 0xFFFF0000) | (ab >> 16);
-            c = (cd & 0xFFFF) | (cd << 16);
-            d = (cd & 0xFFFF0000) | (cd >> 16);
-
-            *dst++ = a;
-            *dst++ = b;
-            *dst++ = c;
-            *dst++ = d;
-
-            source += 2;
-
-        }
-        dst+= 160;
-        Eh += 102; if(Eh >= 240) { Eh -= 240; dh++; } // 102 - real atari lynx y size
-    }
+    return (uint8_t *)mpLynxBuffer;
 }
 
-/*
-    Upscale 160x102 -> 400x240
-    Horizontal upscale:
-        400/160=2.5  --  do some horizontal interpolation
-        [ab][cd] -> [aa][(ab)b][bc][c(cd)][dd]
-    Vertical upscale:
-        Bresenham algo with simple interpolation
-*/
-void upscale_400x240(Uint32 *src, Uint32 *dst)
-{
-    int midh = 240 / 2 * 3 / 2;
-    int Eh = 0;
-    int source = 0;
-    int dh = 0;
-    int i, j;
+extern int gui_ImageScaling;
 
-    for (i = 0; i < 240; i++)
-    {
-        source = dh * 160 / 2; // atari lynx x / 2 
-
-        for (j = 0; j < 400/10; j++)
-        {
-            Uint32 a, b, c, d, e, ab, cd;
-
-            __builtin_prefetch(dst + 4, 1);
-            __builtin_prefetch(src + source + 4, 0);
-
-            ab = src[source] & 0xF7DEF7DE;
-            cd = src[source + 1] & 0xF7DEF7DE;
-
-            #define AVERAGE(z, x) ((((z) & 0xF7DEF7DE) >> 1) + (((x) & 0xF7DEF7DE) >> 1))
-            if(Eh >= midh) { // average + 160
-                ab = AVERAGE(ab, src[source+160/2]) & 0xF7DEF7DE; // to prevent overflow
-                cd = AVERAGE(cd, src[source+160/2+1]) & 0xF7DEF7DE; // to prevent overflow
-            }
-            #undef AVERAGE
-
-            a = (ab & 0xFFFF) | (ab << 16);
-            b = (((ab & 0xFFFF) >> 1) + ((ab & 0xFFFF0000) >> 17)) | (ab & 0xFFFF0000);
-            c = (ab >> 16) | (cd << 16);
-            d = (cd & 0xFFFF) | (((cd & 0xFFFF) << 15) + ((cd & 0xFFFF0000) >> 1));
-            e = (cd >> 16) | (cd & 0xFFFF0000);
-
-            *dst++ = a;
-            *dst++ = b;
-            *dst++ = c;
-            *dst++ = d;
-            *dst++ = e;
-
-            source += 2;
-
-        }
-        dst+= 160;
-        Eh += 102; if(Eh >= 240) { Eh -= 240; dh++; } // 102 - real atari lynx y size
-    }
-}
-
-/*
-    Upscale 160x102 -> 480x272
-    Horizontal upscale
-        480/160=3  --  simple tripling of pixels
-        [ab][cd] -> [aa][ab][bb][cc][cd][dd]
-    Vertical upscale:
-        Bresenham algo with simple interpolation
-*/
-void upscale_480x272(Uint32 *src, Uint32 *dst)
-{
-    int midh = 272 / 2 * 3 / 2;
-    int Eh = 0;
-    int source = 0;
-    int dh = 0;
-    int i, j;
-
-    for (i = 0; i < 272; i++)
-    {
-        source = dh * 160 / 2; // atari lynx x / 2 
-
-        for (j = 0; j < 480/12; j++)
-        {
-            Uint32 a, b, c, d, e, f, ab, cd;
-
-            __builtin_prefetch(dst + 4, 1);
-            __builtin_prefetch(src + source + 4, 0);
-
-            ab = src[source] & 0xF7DEF7DE;
-            cd = src[source + 1] & 0xF7DEF7DE;
-
-            #define AVERAGE(z, x) ((((z) & 0xF7DEF7DE) >> 1) + (((x) & 0xF7DEF7DE) >> 1))
-            if(Eh >= midh) { // average + 160
-                ab = AVERAGE(ab, src[source+160/2]);
-                cd = AVERAGE(cd, src[source+160/2+1]);
-            }
-            #undef AVERAGE
-
-            a = (ab & 0xFFFF) | (ab << 16);
-            b = ab;
-            c = (ab & 0xFFFF0000) | (ab >> 16);
-            d = (cd & 0xFFFF) | (cd << 16);
-            e = cd;
-            f = (cd & 0xFFFF0000) | (cd >> 16);
-
-            *dst++ = a;
-            *dst++ = b;
-            *dst++ = c;
-            *dst++ = d;
-            *dst++ = e;
-            *dst++ = f;
-
-            source += 2;
-
-        }
-        dst+= 160;
-        Eh += 102; if(Eh >= 272) { Eh -= 272; dh++; } // 102 - real atari lynx y size
-    }
-}
-
-#endif
 inline void handy_sdl_draw_graphics(void)
 {
-
-    if( filter >= 1 )
-    {
-        if(SDL_MUSTLOCK(mainSurface)) SDL_LockSurface(mainSurface);
-        handy_sdl_draw_filter(filter, HandyBuffer, mainSurface, delta);
-        if(SDL_MUSTLOCK(mainSurface)) SDL_UnlockSurface(mainSurface);
-    }
-    else
-    {
-
-        if (LynxScale == 1)
-        {
-#ifdef DINGUX
-            if(SDL_MUSTLOCK(mainSurface)) SDL_LockSurface(mainSurface);
-            switch(mainSurface->w) {
-                case 320:
-                    upscale_320x240((Uint32 *)HandyBuffer->pixels, (Uint32 *)mainSurface->pixels);
-                    break;
-                case 400:
-                    upscale_400x240((Uint32 *)HandyBuffer->pixels, (Uint32 *)mainSurface->pixels);
-                    break;
-                case 480:
-                    upscale_480x272((Uint32 *)HandyBuffer->pixels, (Uint32 *)mainSurface->pixels);
-                    break;
-            }
-            if(SDL_MUSTLOCK(mainSurface)) SDL_UnlockSurface(mainSurface);
-            /*UpscaleBresenham((Uint16 *)HandyBuffer->pixels, 
-                                            HandyBuffer->pitch, 
-                                            160,
-                                            102,
-                                            (Uint16 *)mainSurface->pixels, 
-                                            mainSurface->pitch, 
-                                            mainSurface->w, 
-                                            mainSurface->h);*/
-#else
-#ifdef SDL_MEMCPY
-            memcpy(mainSurface->pixels, HandyBuffer->pixels, LynxWidth * LynxHeight* bpp);
-#else
-            SDL_BlitSurface(HandyBuffer, NULL, mainSurface, NULL);
-#endif
-        }
-        else
-        {
-            switch( stype )
-            {
-                case 1:
-                    if (!LynxLCD)
-                        sdlemu_vidstretch_2(HandyBuffer, mainSurface, LynxWidth, LynxHeight, LynxScale);
-                    else
-                        sdlemu_scanline_2(HandyBuffer, mainSurface, LynxWidth, LynxHeight, LynxScale);
-                    break;
-                case 2:
-                    if (!LynxLCD)
-                        sdlemu_vidstretch_2(HandyBuffer, mainSurface, LynxWidth, LynxHeight, LynxScale);
-                    else
-                        sdlemu_scanline_2(HandyBuffer, mainSurface, LynxWidth, LynxHeight, LynxScale);
-                    break;
-                case 3:
-                    handy_sdl_scale();
-                    break;
-
-            }
-#endif
-        }
-    }
+	Uint8 *dst_offset;
+	SDL_Rect dst;
+	if(SDL_MUSTLOCK(mainSurface)) SDL_LockSurface(mainSurface);
+	
+	if (mpLynx->CartGetRotate() == 0)
+	{
+			switch(mainSurface->w) 
+			{
+				case 320:
+					dst.x = 0;
+					if (gui_ImageScaling == 0) dst.y = ((mainSurface->h - (LynxHeight*2))/2);
+					else dst.y = 0;
+					dst.w = (LynxWidth*2);
+					if (gui_ImageScaling == 0) dst.h = (LynxHeight*2);
+					else dst.h = mainSurface->h;
+					SDL_SoftStretch(HandyBuffer, NULL, mainSurface, &dst);
+				break;
+				case 400:
+					dst.x = 40;
+					if (gui_ImageScaling == 0) dst.y = ((mainSurface->h - (LynxHeight*2))/2);
+					else dst.y = 0;
+					dst.w = (LynxWidth*2);
+					if (gui_ImageScaling == 0) dst.h = (LynxHeight*2);
+					else dst.h = mainSurface->h;
+					SDL_SoftStretch(HandyBuffer, NULL, mainSurface, &dst);
+				break;
+				case 480:
+					dst.x = 0;
+					dst.y = 0;
+					dst.w = mainSurface->w;
+					dst.h = mainSurface->h;
+					SDL_SoftStretch(HandyBuffer, NULL, mainSurface, &dst);
+				break;
+			}
+	}
+	else
+	{
+		SDL_Rect dst;
+		dst.x = (mainSurface->w - (LynxWidth*2))/2;
+		dst.y = 0;
+		dst.w = (LynxWidth*2);
+		dst.h = mainSurface->h;
+		SDL_SoftStretch(HandyBuffer, NULL, mainSurface, &dst);
+	}
+	
+	if(SDL_MUSTLOCK(mainSurface)) SDL_UnlockSurface(mainSurface);
 }
 
 #ifndef DINGUX

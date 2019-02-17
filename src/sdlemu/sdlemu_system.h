@@ -33,7 +33,7 @@ typedef unsigned long  uint32;
 
 typedef unsigned char  u8;
 typedef unsigned short u16;
-typedef unsigned int   u32;
+typedef uint32_t   u32;
 
 #ifdef _MSC_VER
 typedef unsigned __int64 u64;

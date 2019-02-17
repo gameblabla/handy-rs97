@@ -44,8 +44,8 @@
 static SDL_Surface *texture      = 0;
 static GLuint       texid        = 0;
 static GLfloat      texcoord[4];
-static unsigned int glFilter;
-static unsigned int texturebpp  = 0; // 16, 24 or 32 bpp
+static uint32_t glFilter;
+static uint32_t texturebpp  = 0; // 16, 24 or 32 bpp
 
 static SDL_Surface * overlay = 0;
 static GLuint overlayID = 0;

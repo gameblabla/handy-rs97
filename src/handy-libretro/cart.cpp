@@ -55,8 +55,11 @@
 //#include "zlib.h"
 #include "scrc32.h"
 
+extern int Invert;
+
 CCart::CCart(UBYTE *gamedata,ULONG gamesize)
 {
+	uint32_t mycrc = 0;
    int headersize=0
    TRACE_CART1("CCart() called with %s",gamefile);
    LYNX_HEADER	header;
@@ -68,6 +71,7 @@ CCart::CCart(UBYTE *gamedata,ULONG gamesize)
    mEEPROMType=0;
    mCRC32=0;
    mCRC32=crc32(mCRC32,gamedata,gamesize);
+   mycrc = crc32(0,gamedata,gamesize);
 
    // Open up the file
 
@@ -103,6 +107,7 @@ CCart::CCart(UBYTE *gamedata,ULONG gamesize)
 
       mRotation=header.rotation;
       if(mRotation!=CART_NO_ROTATE && mRotation!=CART_ROTATE_LEFT && mRotation!=CART_ROTATE_RIGHT) mRotation=CART_NO_ROTATE;
+
       mAudinFlag=(header.aud_bits&0x01) ;
       mEEPROMType=header.eeprom;
    }
@@ -276,25 +281,57 @@ CCart::CCart(UBYTE *gamedata,ULONG gamesize)
             }
          }
       }
-      TRACE_CART1("CCart() - mHeaderLess=%d",mHeaderLess);
+		TRACE_CART1("CCart() - mHeaderLess=%d",mHeaderLess);
    }
 
    // Dont allow an empty Bank1 - Use it for shadow SRAM/EEPROM
-   if(banktype1==UNUSED)
-   {
-      // Delete the single byte allocated  earlier
-      delete[] mCartBank1;
-      // Allocate some new memory for us
-      TRACE_CART0("CCart() - Bank1 being converted to 64K SRAM");
-      banktype1=C64K;
-      mMaskBank1=0x00ffff;
-      mShiftCount1=8;
-      mCountMask1=0x0ff;
-      mCartBank1 = (UBYTE*) new UBYTE[mMaskBank1+1];
-      memset(mCartBank1, DEFAULT_RAM_CONTENTS, mMaskBank1+1);
-      mWriteEnableBank1=TRUE;
-      mCartRAM=TRUE;
-   }
+	if(banktype1==UNUSED)
+	{
+		// Delete the single byte allocated  earlier
+		delete[] mCartBank1;
+		// Allocate some new memory for us
+		TRACE_CART0("CCart() - Bank1 being converted to 64K SRAM");
+		banktype1=C64K;
+		mMaskBank1=0x00ffff;
+		mShiftCount1=8;
+		mCountMask1=0x0ff;
+		mCartBank1 = (UBYTE*) new UBYTE[mMaskBank1+1];
+		memset(mCartBank1, DEFAULT_RAM_CONTENTS, mMaskBank1+1);
+		mWriteEnableBank1=TRUE;
+		mCartRAM=TRUE;
+	}
+   
+
+
+	if (mRotation == CART_ROTATE_LEFT || mRotation == CART_ROTATE_RIGHT)
+		Invert = 1;
+	else
+		Invert = 0;
+	
+	printf("Game CRC %d\n", mycrc);
+	
+	/* Some games don't have a proper header or have incorrect controls. */
+	
+	switch(mycrc)
+	{
+		/* Klax , Rotate to the left */
+		case -330061704:
+		/* Gauntlet , Rotate to the left */
+		case -1018593358:
+			mRotation = CART_ROTATE_LEFT;
+			Invert = 2;
+		break;
+		
+		/* NFL Football , Rotate to the right */
+		case -1013434978:
+		/* Centipede (Prototype) , Rotate to the right */
+		case -477491351:
+		/* Lexis , Rotate to the right */
+		case 643240142:
+			mRotation = CART_ROTATE_RIGHT;
+			Invert = 1;
+		break;
+	}
 }
 
 CCart::~CCart()

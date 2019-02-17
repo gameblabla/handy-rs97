@@ -80,9 +80,11 @@
 /* SDL declarations */
 SDL_Surface        *HandyBuffer;             // Our Handy/SDL display buffer
 SDL_Surface        *mainSurface;             // Our Handy/SDL primary display
+SDL_Joystick *joystick;
+extern uint32_t Joystick_Down(uint32_t mask);
 
 /* Handy declarations */
-Uint32            *mpLynxBuffer;
+ULONG            *mpLynxBuffer;
 CSystem         *mpLynx;
 int                 mFrameSkip = 0;
 int                 mpBpp;                    // Lynx rendering bpp
@@ -95,7 +97,7 @@ int                LynxLCD = 1;            // Emulate LCD Display
 int              LynxFormat;                // Lynx ROM format type
 int              LynxRotate;                // Lynx ROM rotation type
 #ifndef DINGUX
-Uint32          overlay_format = SDL_YV12_OVERLAY; // YUV Overlay format
+uint32_t          overlay_format = SDL_YV12_OVERLAY; // YUV Overlay format
 #endif
 
 int                 emulation = 0;
@@ -302,7 +304,7 @@ void handy_sdl_quit(void)
     //SDL_FreeSurface(mainSurface);
 
     // Close SDL Subsystems
-    SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
+    SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);
     SDL_Quit();
     exit(EXIT_SUCCESS);
 
@@ -357,8 +359,8 @@ int main(int argc, char *argv[])
     int       i;
     int       frameskip  = 0;   // Frameskip
     SDL_Event handy_sdl_event;
-    Uint32    handy_sdl_start_time;
-    Uint32    handy_sdl_this_time;
+    uint32_t    handy_sdl_start_time;
+    uint32_t    handy_sdl_this_time;
     int       framecounter = 0; // FPS Counter
     int       Autoskip = 0;     // Autoskip
     int       Skipped = 0;
@@ -528,10 +530,13 @@ int main(int argc, char *argv[])
 
     // Initalising SDL for Audio and Video support
     printf("Initialising SDL...           ");
-    if (SDL_Init(SDL_INIT_AUDIO|SDL_INIT_VIDEO) < 0) {
+    if (SDL_Init(SDL_INIT_AUDIO|SDL_INIT_VIDEO|SDL_INIT_JOYSTICK) < 0) {
         fprintf(stderr, "FAILED : Unable to init SDL: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
+    
+	if(SDL_NumJoysticks()>0)
+		joystick = SDL_JoystickOpen(0);
     printf("[DONE]\n");
 
     // Primary initalise of Handy - should be called AFTER SDL_Init() but BEFORE handy_sdl_video_setup()
@@ -572,6 +577,10 @@ int main(int argc, char *argv[])
         // Initialise Handy button events
         int OldKeyMask, KeyMask = mpLynx->GetButtonData();
         OldKeyMask = KeyMask;
+        
+		SDL_JoystickUpdate();
+		
+		KeyMask = Joystick_Down(KeyMask);
 
         // Getting events for keyboard and/or joypad handling
         while(SDL_PollEvent(&handy_sdl_event))
@@ -592,8 +601,7 @@ int main(int argc, char *argv[])
                         SDL_Flip(mainSurface);
                         break;
                     }
-                    //if(handy_sdl_event.key.keysym.sym == SDLK_TAB) {
-                    if(handy_sdl_event.key.keysym.sym == 51) { // fix for retrogame
+                    if(handy_sdl_event.key.keysym.sym == SDLK_ESCAPE || handy_sdl_event.key.keysym.sym == SDLK_3) {
                         gui_Run();
                         KeyMask = 0;
                         break;
@@ -614,7 +622,7 @@ int main(int argc, char *argv[])
         // Update TimerCount
         gTimerCount++;
 
-		Uint32 start;
+		uint32_t start;
 
         while( handy_sdl_update() )
         {
@@ -625,7 +633,7 @@ int main(int argc, char *argv[])
                 
                 // synchronize by sound samples
                 SDL_LockMutex(sound_mutex);
-                for(ULONG loop=256;loop;loop--)
+                for(uint32_t loop=256;loop;loop--)
                 {
                     if(Throttle) while(gAudioBufferPointer >= HANDY_AUDIO_BUFFER_SIZE/2) SDL_CondWait(sound_cv, sound_mutex);
                     mpLynx->Update();
@@ -656,7 +664,7 @@ SDL_UnlockMutex(sound_mutex);
 #endif
 
         // not needed since we are synchronizing by sound
-        //if( (Throttle) && (fps_counter > 59.99) ) SDL_Delay( (Uint32)fps_counter );
+        //if( (Throttle) && (fps_counter > 59.99) ) SDL_Delay( (uint32_t)fps_counter );
 
 #ifndef DINGUX
         if(Autoskip)

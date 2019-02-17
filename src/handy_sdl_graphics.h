@@ -71,7 +71,7 @@ inline  void    handy_sdl_draw_filter(int filtertype, SDL_Surface *src, SDL_Surf
 		int 	handy_sdl_video_setup_opengl(int fsaa, int accel, int sync);
 		int 	handy_sdl_video_setup_sdl(const SDL_VideoInfo *info);
 		int 	handy_sdl_video_setup_yuv(void);
-		UBYTE  *handy_sdl_display_callback(ULONG objref);
+		uint8_t  *handy_sdl_display_callback(ULONG objref);
 		void 	handy_sdl_render_buffer(void);
 		void    handy_sdl_video_close(void);
 		int		handy_sdl_video_early_setup(int surfacewidth, int surfaceheight, int sdl_bpp_flag, int videoflags);

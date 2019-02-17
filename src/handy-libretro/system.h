@@ -201,7 +201,7 @@ class CSystem : public CSystemBase
       bool	MemoryContextLoad(const char *context, size_t size);
       bool	ContextSave(const char *context);
       bool	ContextLoad(const char *context);
-      bool	IsZip(char *filename);
+      bool	IsZip(const char *filename);
 
       inline void Update(void)
       {

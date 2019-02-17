@@ -19,7 +19,7 @@ STRIP      = strip
 
 TARGET     = handy320
 
-CFLAGS = -DDINGUX -O2 -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH
+CFLAGS = -DDINGUX -O0 -g3 -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH
 CPPFLAGS = $(CFLAGS)
 LDFLAGS =
 LIBS = -lstdc++ -lSDL -lz -lpthread
@@ -42,6 +42,7 @@ OBJS = \
 		obj/handy_sdl_handling.o \
 		obj/handy_sdl_graphics.o \
 		obj/handy_sdl_sound.o \
+		obj/scaler.o \
 		obj/gui.o \
 		obj/font.o
 
@@ -81,7 +82,7 @@ obj/%.o: src/sdlemu/%.cpp
 	@echo "*** Compiling $<..."
 	$(CC) $(CPPFLAGS) $(INCS) -c $< -o $@
 
-obj/%.o: src/zlib-113/%.c
+obj/%.o: src/unzip/%.c
 	@echo "*** Compiling $<..."
 	$(CC) $(CFLAGS) $(INCS) -c $< -o $@
 	

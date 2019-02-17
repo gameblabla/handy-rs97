@@ -56,6 +56,8 @@ extern SDL_Surface *HandyBuffer; // Our Handy/SDL display buffer
 extern SDL_Surface *mainSurface; // Our Handy/SDL primary display
 SDL_Surface *menuSurface = NULL; // menu rendering
 
+int Invert = 0;
+
 void gui_LoadState();
 void gui_SaveState();
 void gui_FileBrowserRun();
@@ -95,7 +97,7 @@ typedef struct {
 	MENUITEM *m; // array of items
 } MENU;
 
-char* gui_ScaleNames[] = {"simple2x", "fullscreen"};
+char* gui_ScaleNames[] = {"Prefer Aspect", "fullscreen"};
 char* gui_YesNo[] = {"no", "yes"};
 
 MENUITEM gui_MainMenuItems[] = {
@@ -129,6 +131,10 @@ void gui_ClearScreen()
 
 	SDL_FillRect(mainSurface,NULL,SDL_MapRGBA(mainSurface->format, 0, 0, 0, 255));
 	SDL_Flip(mainSurface);
+#ifdef SDL_TRIPLEBUF	
+	SDL_FillRect(mainSurface,NULL,SDL_MapRGBA(mainSurface->format, 0, 0, 0, 255));
+	SDL_Flip(mainSurface);
+#endif
 }
 
 /*
@@ -565,7 +571,9 @@ void ShowPreview(MENU *menu)
 			SDL_Rect dst;
 			dst.x = 80;
 			dst.y = 24;
-			SDL_BlitSurface(HandyBuffer, 0, menuSurface, &dst);
+			dst.w = 160;
+			dst.h = 102;
+			SDL_SoftStretch(HandyBuffer, 0, menuSurface, &dst);
 		}
 	}
 }
@@ -637,6 +645,14 @@ void gui_MainMenuRun(MENU *menu)
 		SDL_Delay(16);
 		gui_Flip();
 	}
+	SDL_FillRect(mainSurface, NULL, 0);
+	SDL_Flip(mainSurface);
+	SDL_FillRect(mainSurface, NULL, 0);
+	SDL_Flip(mainSurface);
+	#ifdef SDL_TRIPLEBUF
+	SDL_FillRect(mainSurface, NULL, 0);
+	SDL_Flip(mainSurface);
+	#endif
 }
 
 void get_config_path()
@@ -780,17 +796,6 @@ void gui_Flip()
 
 	dstrect.x = (mainSurface->w - 320) / 2;
 	dstrect.y = (mainSurface->h - 240) / 2;
-	//SDL_BlitSurface(menuSurface, 0, mainSurface, &dstrect);
-
-  int x, y;
-  uint32_t *s = (uint32_t*)menuSurface->pixels;
-  uint32_t *d = (uint32_t*)mainSurface->pixels;
-
-  for(y=0; y<240; y++){
-    for(x=0; x<160; x++){
-      *d++ = *s++;
-    }
-    d+= 160;
-  }
+	SDL_BlitSurface(menuSurface, 0, mainSurface, &dstrect);
 	SDL_Flip(mainSurface);
 }

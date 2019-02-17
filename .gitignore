@@ -1,0 +1,7 @@
+*.elf
+./handy
+*.o
+*.gcda
+obj/
+obj
+*.ipk

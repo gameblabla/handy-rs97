@@ -71,7 +71,7 @@ extern SDL_Surface		*mainSurface;	 		// Our Handy/SDL primary display
 extern SDL_Surface		*ScreenSurface;	 		// Our Handy/SDL primary display
 
 /* Handy declarations */
-extern Uint32			*mpLynxBuffer;
+extern ULONG			*mpLynxBuffer;
 extern CSystem 		    *mpLynx;
 extern int				 mFrameSkip;
 extern int				 mpBpp;
@@ -87,7 +87,7 @@ extern int				emulation;              // Emulation enabled
 extern int				rendertype;             // SDL Rendertype
 extern int				stype;					// Scaling/Scanline Routine
 extern int              filter;					// Output Filter
-extern Uint32           overlay_format;         // YUV Overlay format
+extern uint32_t           overlay_format;         // YUV Overlay format
 extern Uint8  		   *delta;
 
 inline	int 	handy_sdl_update(void);

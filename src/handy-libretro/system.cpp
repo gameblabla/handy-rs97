@@ -55,6 +55,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "system.h"
+#include "../unzip/unzip.h"
+
 
 extern void lynx_decrypt(unsigned char * result, const unsigned char * encrypted, const int length);
 
@@ -144,13 +146,118 @@ void _splitpath(const char* path, char* drv, char* dir, char* name, char* ext)
    ULONG howardsize=0;
 
    mFileType=HANDY_FILETYPE_ILLEGAL;
-   if(strcmp(gamefile,"")==0)
+   
+	// First check for ZIP file
+	if(strcmp(gamefile,"")==0)
    {
       // No file
       filesize=0;
       filememory=NULL;
    }
-   else
+	else if(IsZip(gamefile))
+	{
+		// Try and find a file in the zip
+		unzFile *fp;
+		unz_file_info info;
+		char filename_buf[0x100], *ptr;
+		bool gotIt;
+		
+		if((fp=(unzFile*)unzOpen(gamefile))!=NULL)
+		{
+			if(unzGoToFirstFile(fp)!=UNZ_OK)
+			{
+				unzClose(fp);
+				CLynxException lynxerr;
+				lynxerr.Message() << "Handy Error: ZIP File select problems" ;
+				lynxerr.Description()
+					<< "The file you selected could not be read." << endl
+					<< "(The ZIP file may be corrupted)." << endl ;
+				return; //throw(lynxerr);
+			}
+			
+			gotIt = FALSE;
+			for (;;)
+			{
+				// Get file descriptor and analyse
+				if(unzGetCurrentFileInfo(fp, &info, filename_buf, 0x100, NULL, 0, NULL, 0) != UNZ_OK)
+				{
+					break;
+				}
+				else
+				{
+					ptr = strchr(filename_buf, '.');
+					if (ptr != NULL)
+					{
+						char buf[4];
+					
+						ptr++; buf[0] = tolower(*ptr);
+						ptr++; buf[1] = tolower(*ptr);
+						ptr++; buf[2] = tolower(*ptr);
+						buf[3] = 0;
+						if (!strcmp(buf, "lnx") || !strcmp(buf, "com") || !strcmp(buf, "o"))
+						{
+							// Found a likely file so signal
+							gotIt = TRUE;
+							break;
+						}
+					}
+
+					// No match so lets try the next file
+					if(unzGoToNextFile(fp)!=UNZ_OK)	break;
+				}
+			}
+			
+			// Did we strike gold ?
+			if(gotIt)
+			{
+				if(unzOpenCurrentFile(fp)==UNZ_OK)
+				{
+					// Allocate memory for the rom
+					filesize=info.uncompressed_size;
+					filememory=(UBYTE*) new UBYTE[filesize];
+
+					// Read it into memory					
+					if(unzReadCurrentFile(fp,filememory,filesize)!=(int)info.uncompressed_size)
+					{
+						unzCloseCurrentFile(fp);
+						unzClose(fp);
+						delete filememory;
+						// Throw a wobbly
+						CLynxException lynxerr;
+						lynxerr.Message() << "Handy Error: ZIP File load problems" ;
+						lynxerr.Description()
+							<< "The zip file you selected could not be loaded." << endl
+							<< "(The ZIP file may be corrupted)." << endl ;
+						return; //throw(lynxerr);
+					}
+
+					// Got it!
+					unzCloseCurrentFile(fp);
+					unzClose(fp);
+				}
+				
+			}
+			else
+			{
+				CLynxException lynxerr;
+				lynxerr.Message() << "Handy Error: ZIP File load problems" ;
+				lynxerr.Description()
+					<< "The file you selected could not be loaded." << endl
+					<< "Could not find a Lynx file in the ZIP archive." << endl ;
+				return; //throw(lynxerr);
+			}
+		}
+		else
+		{
+			CLynxException lynxerr;
+			lynxerr.Message() << "Handy Error: ZIP File open problems" ;
+			lynxerr.Description()
+				<< "The file you selected could not be opened." << endl
+				<< "(The ZIP file may be corrupted)." << endl ;
+			return; //throw(lynxerr);
+		}
+	}
+	else
    {
       // Open the file and load the file
       FILE	*fp;
@@ -175,6 +282,7 @@ void _splitpath(const char* path, char* drv, char* dir, char* name, char* ext)
 
       fclose(fp);
    }
+
 
    // Now try and determine the filetype we have opened
    if(filesize)
@@ -327,7 +435,7 @@ CSystem::~CSystem()
    if(mMemMap!=NULL) delete mMemMap;
 }
 
-bool CSystem::IsZip(char *filename)
+bool CSystem::IsZip(const char *filename)
 {
    UBYTE buf[2];
    FILE *fp;
@@ -680,7 +788,7 @@ bool CSystem::ContextLoad(const char *context)
    UBYTE *filememory=NULL;
    ULONG filesize=0;
 
-   {
+	{
       FILE *fp;
       // Just open an read into memory
       if((fp=fopen(context,"rb"))==NULL) status=0;
@@ -696,7 +804,7 @@ bool CSystem::ContextLoad(const char *context)
          return 1;
       }
       fclose(fp);
-   }
+	}
 
    // Setup our read structure
    fp = new LSS_FILE;

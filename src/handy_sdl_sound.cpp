@@ -90,7 +90,7 @@ SDL_cond *sound_cv;
 */
 void handy_sdl_audio_callback(void *userdata, Uint8 *stream, int len)
 {
-    Uint32 length = len >> 1;
+    uint32_t length = len >> 1;
     Uint16 *dst = (Uint16 *)stream;
     Uint8 *src = (Uint8 *)gAudioBuffer;
 #ifdef HANDY_SDL_DEBUG

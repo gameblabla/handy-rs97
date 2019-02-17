@@ -45,6 +45,8 @@
 #ifndef CART_H
 #define CART_H
 
+#include "machine.h"
+
 #define EPYX_HEADER_OLD 512
 #define EPYX_HEADER_NEW 410
 

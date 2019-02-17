@@ -1742,8 +1742,8 @@ void Simple2x(u8 *srcPtr, u32 srcPitch, u8 * /* deltaPtr */,
     } while ((u8 *) bP < finish);
     
     srcPtr += srcPitch;
-    dstPtr += dstPitch * 2 * 2; // fix for retrogame
-    nextLine += dstPitch * 2 * 2; // fix for retrogame
+    dstPtr += dstPitch * 2; // fix for retrogame
+    nextLine += dstPitch * 2; // fix for retrogame
   }
   while (--height);
 }
