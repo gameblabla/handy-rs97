@@ -67,5 +67,7 @@
 
 int handy_sdl_audio_init(void);
 void handy_sdl_audio_callback(void *userdata, Uint8 *stream, int len);
+void handy_sdl_sound_loop();
+void handy_sdl_close();
 
 #endif

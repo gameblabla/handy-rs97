@@ -56,6 +56,7 @@
 #ifndef __HANDY_SDL_MAIN_H__
 #define __HANDY_SDL_MAIN_H__
 
+#include <SDL/SDL.h>
 #include "system.h"
 #include "pixblend.h"
 #include "errorhandler.h"

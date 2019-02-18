@@ -62,8 +62,6 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <SDL/SDL.h>
-#include <SDL/SDL_main.h>
-#include <SDL/SDL_timer.h>
 
 #include "handy_sdl_main.h"
 #include "handy_sdl_graphics.h"
@@ -284,9 +282,8 @@ void handy_sdl_rom_info(void)
 }
 void handy_sdl_quit(void)
 {
-
     // Disable audio and set emulation to pause, then quit :)
-    SDL_PauseAudio(1);
+    handy_sdl_close();
     emulation   = -1;
 
 #ifndef DINGUX
@@ -296,15 +293,13 @@ void handy_sdl_quit(void)
 #endif
 
     //Let is give some free memory
-    free(mpLynxBuffer);
+	if (mpLynxBuffer != NULL) free(mpLynxBuffer);
 
-    // Destroy SDL Surface's
-    // Causes Illegal Instruction on Zipit Z2
-    //SDL_FreeSurface(HandyBuffer);
-    //SDL_FreeSurface(mainSurface);
+	if (HandyBuffer != NULL) SDL_FreeSurface(HandyBuffer);
+	if (mainSurface != NULL) SDL_FreeSurface(mainSurface);
 
     // Close SDL Subsystems
-    SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);
+    SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK);
     SDL_Quit();
     exit(EXIT_SUCCESS);
 
@@ -628,18 +623,7 @@ int main(int argc, char *argv[])
         {
             if(!gSystemHalt)
             {
-                extern SDL_mutex *sound_mutex;
-                extern SDL_cond *sound_cv;
-                
-                // synchronize by sound samples
-                SDL_LockMutex(sound_mutex);
-                for(uint32_t loop=256;loop;loop--)
-                {
-                    if(Throttle) while(gAudioBufferPointer >= HANDY_AUDIO_BUFFER_SIZE/2) SDL_CondWait(sound_cv, sound_mutex);
-                    mpLynx->Update();
-                }
-                SDL_CondSignal(sound_cv);
-SDL_UnlockMutex(sound_mutex);
+				handy_sdl_sound_loop();
             }
             else
             {

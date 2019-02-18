@@ -403,12 +403,12 @@ int handy_sdl_video_setup_sdl(const SDL_VideoInfo *info)
 {
     uint32_t             videoflags;
 #ifdef DINGUX
-    videoflags = SDL_HWSURFACE |
-    #ifdef SDL_TRIPLEBUF
-    SDL_TRIPLEBUF
-    #else
-    SDL_DOUBLEBUF
-    #endif
+    videoflags = SDL_HWSURFACE
+#ifdef SDL_TRIPLEBUF
+	| SDL_TRIPLEBUF
+#else
+	| SDL_DOUBLEBUF
+#endif
     ;
 #else
     if (info->hw_available)

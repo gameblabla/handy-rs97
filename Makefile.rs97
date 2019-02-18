@@ -18,10 +18,10 @@ STRIP      = /opt/rs97-toolchain/bin/mipsel-linux-strip
 
 TARGET     = handy
 
-CFLAGS = -DDINGUX -O2 -mips32 -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH -DDINGOO -DRS97
+CFLAGS = -O2 -fdata-sections -ffunction-sections -fno-common -mips32 -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH -DDINGUX -DRS97 -DOSS_OUTPUT
 CPPFLAGS = $(CFLAGS)
 LDFLAGS =
-LIBS = -lstdc++ -lSDL -lz -lpthread
+LIBS = -lstdc++ -lSDL -lz -lpthread -Wl,--as-needed -Wl,--gc-sections -flto -s
 
 INCS = -I./src -I./src/handy-libretro -I./src/sdlemu
 

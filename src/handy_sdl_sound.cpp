@@ -58,15 +58,30 @@
 #include <cstring>
 #include <ctime>
 #include <cctype>
-#include <SDL/SDL.h>
-#include <SDL/SDL_main.h>
-#include <SDL/SDL_timer.h>
 
 #include "handy_sdl_main.h"
 #include "handy_sdl_sound.h"
 
+#if defined(LIBAO)
+#include <ao/ao.h>
+ao_device *aodevice;
+ao_sample_format aoformat;
+#elif defined(PORTAUDIO)
+#include <portaudio.h>
+PaStream *apu_stream;
+#elif defined(OSS_OUTPUT)
+#include <sys/ioctl.h>
+#include <sys/fcntl.h>
+#include <unistd.h>
+#include <sys/soundcard.h>
+static int32_t oss_audio_fd = -1;
+#else
+#include <SDL/SDL.h>
+#include <SDL/SDL_main.h>
+#include <SDL/SDL_timer.h>
 SDL_mutex *sound_mutex;
 SDL_cond *sound_cv;
+#endif
 
 /*  
     Name                :   handy_sdl_audio_callback
@@ -88,15 +103,12 @@ SDL_cond *sound_cv;
                             the gAudioBuffer and gAudioBufferPointer based 
                             upon the differences between len en gAudioBufferPointer
 */
+#if !defined(PORTAUDIO) && !defined(LIBAO) && !defined(OSS_OUTPUT)
 void handy_sdl_audio_callback(void *userdata, Uint8 *stream, int len)
 {
     uint32_t length = len >> 1;
     Uint16 *dst = (Uint16 *)stream;
     Uint8 *src = (Uint8 *)gAudioBuffer;
-#ifdef HANDY_SDL_DEBUG
-    printf("handy_sdl_audio_callback - DEBUG\n");
-    printf("gAudioBufferPointer : %d - len : %d\n", gAudioBufferPointer, len);
-#endif
 
     SDL_LockMutex(sound_mutex);
 
@@ -114,6 +126,7 @@ void handy_sdl_audio_callback(void *userdata, Uint8 *stream, int len)
     SDL_CondSignal(sound_cv);
     SDL_UnlockMutex(sound_mutex);
 }
+#endif
 
 /*  
     Name                :   handy_sdl_audio_init
@@ -135,22 +148,67 @@ void handy_sdl_audio_callback(void *userdata, Uint8 *stream, int len)
 int handy_sdl_audio_init(void)
 {
     SDL_AudioSpec     *desired;
+    
+    /* If we don't want sound, return 0 */
+    if(gAudioEnabled == FALSE) return 0;
 
 #ifdef HANDY_SDL_DEBUG
     printf("handy_sdl_audio_init - DEBUG\n");
 #endif
 
-    /* If we don't want sound, return 0 */
-    if(gAudioEnabled == FALSE) return 0;
-
+#ifdef LIBAO
+	ao_initialize();
+	memset(&aoformat, 0, sizeof(aoformat));
+	
+	aoformat.bits = 16;
+	aoformat.channels = 2;
+	aoformat.rate = HANDY_AUDIO_SAMPLE_FREQ;
+	aoformat.byte_format = AO_FMT_NATIVE;
+	
+	aodevice = ao_open_live(ao_default_driver_id(), &aoformat, NULL); // Live output
+	gAudioEnabled = 1;
+#elif defined(PORTAUDIO)
+	int32_t err;
+	err = Pa_Initialize();
+	PaStreamParameters outputParameters;
+	outputParameters.device = Pa_GetDefaultOutputDevice();
+	if (outputParameters.device == paNoDevice) 
+	{
+		printf("No sound output\n");
+		gAudioEnabled = 0;
+		return 0;
+	}
+	outputParameters.channelCount = 2;
+	outputParameters.sampleFormat = paInt16;
+	outputParameters.suggestedLatency = Pa_GetDeviceInfo(outputParameters.device)->defaultLowOutputLatency;
+	outputParameters.hostApiSpecificStreamInfo = NULL;
+	err = Pa_OpenStream( &apu_stream, NULL, &outputParameters, HANDY_AUDIO_SAMPLE_FREQ, 1024, paNoFlag, NULL, NULL);
+	err = Pa_StartStream( apu_stream );
+#elif defined(OSS_OUTPUT)
+	uint32_t channels = 2;
+	uint32_t format = AFMT_S16_LE;
+	uint32_t tmp = HANDY_AUDIO_SAMPLE_FREQ;
+	uint32_t err_ret;
+	
+	oss_audio_fd = open("/dev/dsp", O_WRONLY);
+	if (oss_audio_fd < 0)
+	{
+		printf("Couldn't open /dev/dsp.\n");
+		gAudioEnabled = 0;
+		return 0;
+	}
+	
+	err_ret = ioctl(oss_audio_fd, SNDCTL_DSP_SPEED,&tmp);
+	err_ret = ioctl(oss_audio_fd, SNDCTL_DSP_CHANNELS, &channels);
+	err_ret = ioctl(oss_audio_fd, SNDCTL_DSP_SETFMT, &format);
+#else
     /* Allocate a desired SDL_AudioSpec */
     desired = (SDL_AudioSpec *)malloc(sizeof(SDL_AudioSpec));
 
     /* Define our desired SDL audio output */
-    /* Try AUDIO_S16SYS and 11025 if you hardware does not support 8-bits sound */
-    desired->format     = AUDIO_S8;                  // Unsigned 8-bit
+    desired->format     = AUDIO_S16SYS;                  // Unsigned 8-bit
     desired->channels   = 2;                         // Pseudo stereo
-    desired->freq       = 22050;   // Freq : 22050 
+    desired->freq       = HANDY_AUDIO_SAMPLE_FREQ*2;   // Freq : 22050 (output is 44100) 
     desired->samples    = 1024;                       // Samples (power of two)
     desired->callback   = handy_sdl_audio_callback;  // Our audio callback
     desired->userdata   = NULL;                      // N/A
@@ -168,6 +226,62 @@ int handy_sdl_audio_init(void)
     
     /* Enable SDL audio */
     SDL_PauseAudio(0);
-    
+#endif
+	gAudioEnabled = 1;
     return 1;
+}
+
+void handy_sdl_close()
+{
+#ifdef PORTAUDIO
+	int32_t err;
+	err = Pa_CloseStream( apu_stream );
+	err = Pa_Terminate();	
+#elif defined(LIBAO)
+	ao_close(aodevice);
+	ao_shutdown();
+#elif defined(OSS_OUTPUT)
+	if (oss_audio_fd >= 0)
+	{
+		close(oss_audio_fd);
+	}
+#else
+	SDL_PauseAudio(1);
+	SDL_QuitSubSystem(SDL_INIT_AUDIO);
+#endif
+}
+
+void handy_sdl_sound_loop()
+{
+#if defined(PORTAUDIO) || defined(LIBAO) || defined(OSS_OUTPUT)
+	mpLynx->Update();
+	if(gAudioBufferPointer > 0 && gAudioEnabled)
+	{
+		uint32_t f = gAudioBufferPointer;
+		gAudioBufferPointer = 0;	
+		#ifdef LIBAO
+		ao_play(aodevice, (char*)gAudioBuffer, f);
+		#elif defined(OSS_OUTPUT)
+		write(oss_audio_fd, gAudioBuffer, f );
+		#else
+		Pa_WriteStream( apu_stream, gAudioBuffer, f);
+		#endif
+	}
+#else // Assuming SDL
+	/* Quite honestly, this is very poor sound code and does not play well with Triple buffering.
+	 * Portaudio and/or libao should be preferred instead. - Gameblabla*/
+	// synchronize by sound samples
+	SDL_LockMutex(sound_mutex);
+	for(uint32_t loop=256;loop;loop--)
+	{
+#ifndef SDL_TRIPLEBUF
+		extern int Throttle;
+		if(Throttle) while(gAudioBufferPointer >= HANDY_AUDIO_BUFFER_SIZE/2) SDL_CondWait(sound_cv, sound_mutex);
+#endif
+		mpLynx->Update();
+	}
+	SDL_CondSignal(sound_cv);
+	SDL_UnlockMutex(sound_mutex);
+#endif
+
 }

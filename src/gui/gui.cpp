@@ -115,7 +115,9 @@ MENUITEM gui_ConfigMenuItems[] = {
 	{(char *)"Upscale  : ", &gui_ImageScaling, 1, (char **)&gui_ScaleNames, NULL},
 	//{(char *)"Frameskip: ", &gui_Frameskip, 9, NULL, NULL},
 	{(char *)"Show fps : ", &gui_Show_FPS, 1, (char **)&gui_YesNo, NULL},
+#ifndef SDL_TRIPLEBUF
 	{(char *)"Limit fps: ", &Throttle, 1, (char **)&gui_YesNo, NULL},
+#endif
 	{(char *)"Swap A/B : ", &gui_SwapAB, 1, (char **)&gui_YesNo, NULL}
 };
 

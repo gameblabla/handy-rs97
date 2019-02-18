@@ -13,16 +13,17 @@ OSTYPE=dingux
 EXESUFFIX  = .elf
 
 CC         = gcc
-LD         = gcc
+CXX         = g++
+LD         = g++
 STRIP      = strip
 
 
 TARGET     = handy320
 
-CFLAGS = -DDINGUX -O0 -g3 -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH
-CPPFLAGS = $(CFLAGS)
+CFLAGS = -DDINGUX -O2 -g3 -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH -DOSS_OUTPUT
+CXXFLAGS = $(CFLAGS)
 LDFLAGS =
-LIBS = -lstdc++ -lSDL -lz -lpthread
+LIBS = -lstdc++ -lSDL -lz -lpthread 
 
 INCS = -I./src -I./src/handy-libretro -I./src/sdlemu
 
@@ -42,7 +43,6 @@ OBJS = \
 		obj/handy_sdl_handling.o \
 		obj/handy_sdl_graphics.o \
 		obj/handy_sdl_sound.o \
-		obj/scaler.o \
 		obj/gui.o \
 		obj/font.o
 
@@ -60,11 +60,11 @@ obj:
 
 obj/%.o: src/gui/%.cpp
 	@echo "*** Compiling $<..."
-	$(CC) $(CPPFLAGS) $(INCS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
 obj/%.o: src/handy-libretro/%.cpp
 	@echo "*** Compiling $<..."
-	$(CC) $(CPPFLAGS) $(INCS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
 obj/%.o: src/%.c
 	@echo "*** Compiling $<..."
@@ -72,7 +72,7 @@ obj/%.o: src/%.c
 
 obj/%.o: src/%.cpp
 	@echo "*** Compiling $<..."
-	$(CC) $(CPPFLAGS) $(INCS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
 obj/%.o: src/sdlemu/%.c
 	@echo "*** Compiling $<..."
@@ -80,7 +80,7 @@ obj/%.o: src/sdlemu/%.c
 
 obj/%.o: src/sdlemu/%.cpp
 	@echo "*** Compiling $<..."
-	$(CC) $(CPPFLAGS) $(INCS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
 obj/%.o: src/unzip/%.c
 	@echo "*** Compiling $<..."
