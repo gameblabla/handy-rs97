@@ -190,6 +190,7 @@ int handy_sdl_audio_init(void)
 	uint32_t tmp = HANDY_AUDIO_SAMPLE_FREQ;
 	uint32_t err_ret;
 	
+	printf("\nOpening DSP device\n");
 	oss_audio_fd = open("/dev/dsp", O_WRONLY);
 	if (oss_audio_fd < 0)
 	{
@@ -206,9 +207,9 @@ int handy_sdl_audio_init(void)
     desired = (SDL_AudioSpec *)malloc(sizeof(SDL_AudioSpec));
 
     /* Define our desired SDL audio output */
-    desired->format     = AUDIO_S16SYS;                  // Unsigned 8-bit
+    desired->format     = AUDIO_S8;                  // Unsigned 8-bit
     desired->channels   = 2;                         // Pseudo stereo
-    desired->freq       = HANDY_AUDIO_SAMPLE_FREQ*2;   // Freq : 22050 (output is 44100) 
+    desired->freq       = HANDY_AUDIO_SAMPLE_FREQ;   // Freq : 22050 (output is 44100) 
     desired->samples    = 1024;                       // Samples (power of two)
     desired->callback   = handy_sdl_audio_callback;  // Our audio callback
     desired->userdata   = NULL;                      // N/A
@@ -255,7 +256,7 @@ void handy_sdl_sound_loop()
 {
 #if defined(PORTAUDIO) || defined(LIBAO) || defined(OSS_OUTPUT)
 	mpLynx->Update();
-	if(gAudioBufferPointer > 0 && gAudioEnabled)
+	if(gAudioBufferPointer >= HANDY_AUDIO_BUFFER_SIZE/2 && gAudioEnabled)
 	{
 		uint32_t f = gAudioBufferPointer;
 		gAudioBufferPointer = 0;	

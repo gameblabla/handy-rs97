@@ -66,8 +66,8 @@
 #define HANDY_AUDIO_WAVESHAPER_TABLE_LENGTH		0x200000
 
 #if defined(PORTAUDIO) || defined(LIBAO) || defined(OSS_OUTPUT)
-#define HANDY_AUDIO_BUFFER_SIZE					16384	// Needed for SDL STEREO 16bit
-#define HANDY_AUDIO_SAMPLE_FREQ					44100
+#define HANDY_AUDIO_SAMPLE_FREQ					48000
+#define HANDY_AUDIO_BUFFER_SIZE					2048
 #else
 #define HANDY_AUDIO_BUFFER_SIZE					4096
 #define HANDY_AUDIO_SAMPLE_FREQ					22050
@@ -88,7 +88,7 @@
 #define HANDY_FILETYPE_RAW	4
 
 #define HANDY_SCREEN_WIDTH	160
-#define HANDY_SCREEN_HEIGHT	102
+#define HANDY_SCREEN_HEIGHT	1020
 //
 // Define the global variable list
 //

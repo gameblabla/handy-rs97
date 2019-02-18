@@ -295,11 +295,11 @@ void handy_sdl_quit(void)
     //Let is give some free memory
 	if (mpLynxBuffer != NULL) free(mpLynxBuffer);
 
-	if (HandyBuffer != NULL) SDL_FreeSurface(HandyBuffer);
-	if (mainSurface != NULL) SDL_FreeSurface(mainSurface);
+	/*if (HandyBuffer != NULL) SDL_FreeSurface(HandyBuffer);
+	if (mainSurface != NULL) SDL_FreeSurface(mainSurface);*/
 
     // Close SDL Subsystems
-    SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK);
+    SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);
     SDL_Quit();
     exit(EXIT_SUCCESS);
 

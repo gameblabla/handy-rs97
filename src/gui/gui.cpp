@@ -84,10 +84,10 @@ int done = 0; // flag to indicate exit status
 char config_full_path[MAX__PATH];
 
 typedef struct {
-	char *itemName;
+	const char *itemName;
 	int *itemPar;
 	int itemParMaxValue;
-	char **itemParName;
+	const char **itemParName;
 	void (*itemOnA)();
 } MENUITEM;
 
@@ -97,46 +97,40 @@ typedef struct {
 	MENUITEM *m; // array of items
 } MENU;
 
-char* gui_ScaleNames[] = {"Prefer Aspect", "fullscreen"};
-char* gui_YesNo[] = {"no", "yes"};
+const char* gui_ScaleNames[] = {"Prefer Aspect", "fullscreen"};
+const char* gui_YesNo[] = {"no", "yes"};
 
 MENUITEM gui_MainMenuItems[] = {
-	{(char *)"Load rom", NULL, NULL, NULL, &gui_FileBrowserRun},
-	{(char *)"Config", NULL, NULL, NULL, &gui_ConfigMenuRun},
-	{(char *)"Load state: ", &gui_LoadSlot, 9, NULL, &gui_LoadState},
-	{(char *)"Save state: ", &gui_LoadSlot, 9, NULL, &gui_SaveState},
-	{(char *)"Reset", NULL, NULL, NULL, &gui_Reset},
-	{(char *)"Exit", NULL, NULL, NULL, &handy_sdl_quit} // extern in handy_sdl_main.cpp
+	{(const char *)"Load rom", NULL, NULL, NULL, &gui_FileBrowserRun},
+	{(const char *)"Config", NULL, NULL, NULL, &gui_ConfigMenuRun},
+	{(const char *)"Load state: ", &gui_LoadSlot, 9, NULL, &gui_LoadState},
+	{(const char *)"Save state: ", &gui_LoadSlot, 9, NULL, &gui_SaveState},
+	{(const char *)"Reset", NULL, NULL, NULL, &gui_Reset},
+	{(const char *)"Exit", NULL, NULL, NULL, &handy_sdl_quit} // extern in handy_sdl_main.cpp
 };
 
 MENU gui_MainMenu = { 6, 0, (MENUITEM *)&gui_MainMenuItems };
 
 MENUITEM gui_ConfigMenuItems[] = {
-	{(char *)"Upscale  : ", &gui_ImageScaling, 1, (char **)&gui_ScaleNames, NULL},
+	{(const char *)"Upscale  : ", &gui_ImageScaling, 1, (const char **)&gui_ScaleNames, NULL},
 	//{(char *)"Frameskip: ", &gui_Frameskip, 9, NULL, NULL},
-	{(char *)"Show fps : ", &gui_Show_FPS, 1, (char **)&gui_YesNo, NULL},
-#ifndef SDL_TRIPLEBUF
-	{(char *)"Limit fps: ", &Throttle, 1, (char **)&gui_YesNo, NULL},
-#endif
-	{(char *)"Swap A/B : ", &gui_SwapAB, 1, (char **)&gui_YesNo, NULL}
+	//{(char *)"Show fps : ", &gui_Show_FPS, 1, (char **)&gui_YesNo, NULL},
+	{(const char *)"Swap A/B : ", &gui_SwapAB, 1, (const char **)&gui_YesNo, NULL}
 };
 
-MENU gui_ConfigMenu = { 4, 0, (MENUITEM *)&gui_ConfigMenuItems };
+MENU gui_ConfigMenu = { 2, 0, (MENUITEM *)&gui_ConfigMenuItems };
 
 /*
 	Clears mainSurface
 */
 void gui_ClearScreen()
 {
-	SDL_FillRect(mainSurface,NULL,SDL_MapRGBA(mainSurface->format, 0, 0, 0, 255));
-	SDL_Flip(mainSurface);
-
-	SDL_FillRect(mainSurface,NULL,SDL_MapRGBA(mainSurface->format, 0, 0, 0, 255));
-	SDL_Flip(mainSurface);
-#ifdef SDL_TRIPLEBUF	
-	SDL_FillRect(mainSurface,NULL,SDL_MapRGBA(mainSurface->format, 0, 0, 0, 255));
-	SDL_Flip(mainSurface);
-#endif
+	uint8_t i;
+	for(i=0;i<4;i++)
+	{
+		SDL_FillRect(mainSurface,NULL,SDL_MapRGBA(mainSurface->format, 0, 0, 0, 255));
+		SDL_Flip(mainSurface);
+	}
 }
 
 /*
@@ -244,7 +238,7 @@ int sort_function(const void *dest_str_ptr, const void *src_str_ptr)
 	return strcasecmp(dest_str, src_str);
 }
 
-s32 load_file(char **wildcards, char *result)
+s32 load_file(const char **wildcards, char *result)
 {
 	SDL_Event gui_event;
 	char current_dir_name[MAX__PATH];
@@ -506,7 +500,7 @@ s32 load_file(char **wildcards, char *result)
 /*
 	Rom file browser which is called from menu
 */
-char* file_ext[10] = { ".lnx", ".lyx", ".zip", NULL };
+const char* file_ext[4] = { ".lnx", ".lyx", ".zip", NULL };
 
 void gui_FileBrowserRun()
 {
@@ -604,8 +598,8 @@ void ShowMenu(MENU *menu)
 
 	// print info string
 	print_string("Press B to return to game", COLOR_HELP_TEXT, COLOR_BG, 56, 220);
-	print_string("Handy320 v0.1 for OpenDingux", COLOR_HELP_TEXT, COLOR_BG, 44, 2);
-	print_string("Handy/SDL 0.5 (c) K. Wilkins and SDLemu", COLOR_HELP_TEXT, COLOR_BG, 4, 12);
+	print_string("Handy RS97 libretro", COLOR_HELP_TEXT, COLOR_BG, 44, 2);
+	print_string("Port by gameblabla", COLOR_HELP_TEXT, COLOR_BG, 4, 12);
 }
 
 /*
@@ -784,12 +778,8 @@ void gui_video_early_init()
 
 void gui_video_early_deinit()
 {
-	SDL_FreeSurface(mainSurface);
-	SDL_FreeSurface(menuSurface);
-
-	// Close SDL Subsystems
-	SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
-	SDL_Quit();
+	if (mainSurface != NULL) SDL_FreeSurface(mainSurface);
+	if (menuSurface != NULL) SDL_FreeSurface(menuSurface);
 }
 
 void gui_Flip()

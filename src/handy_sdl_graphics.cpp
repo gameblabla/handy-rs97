@@ -545,10 +545,18 @@ inline void handy_sdl_draw_graphics(void)
 	else
 	{
 		SDL_Rect dst;
-		dst.x = (mainSurface->w - (LynxWidth*2))/2;
 		dst.y = 0;
-		dst.w = (LynxWidth*2);
 		dst.h = mainSurface->h;
+		if (gui_ImageScaling == 0)
+		{
+			dst.x = (mainSurface->w - (LynxWidth*2))/2;
+			dst.w = (LynxWidth*2);
+		}
+		else
+		{
+			dst.x = 0;
+			dst.w = mainSurface->w;
+		}
 		SDL_SoftStretch(HandyBuffer, NULL, mainSurface, &dst);
 	}
 	
