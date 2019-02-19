@@ -182,7 +182,7 @@ int handy_sdl_audio_init(void)
 	outputParameters.sampleFormat = paInt16;
 	outputParameters.suggestedLatency = Pa_GetDeviceInfo(outputParameters.device)->defaultLowOutputLatency;
 	outputParameters.hostApiSpecificStreamInfo = NULL;
-	err = Pa_OpenStream( &apu_stream, NULL, &outputParameters, HANDY_AUDIO_SAMPLE_FREQ, 1024, paNoFlag, NULL, NULL);
+	err = Pa_OpenStream( &apu_stream, NULL, &outputParameters, HANDY_AUDIO_SAMPLE_FREQ, HANDY_AUDIO_BUFFER_SIZE, paNoFlag, NULL, NULL);
 	err = Pa_StartStream( apu_stream );
 #elif defined(OSS_OUTPUT)
 	uint32_t channels = 2;

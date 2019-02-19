@@ -19,7 +19,7 @@ esac
 # Create GmenuNx entry file plus other things
 
 print 'Package: handy
-Version: 20190217
+Version: 20190219
 Description: Atari Lynx emulator
 Section: emus
 Priority: optional

@@ -19,7 +19,7 @@ TARGET     = handy
 CFLAGS = -Ofast -fdata-sections -ffunction-sections -fno-common -mips32 -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH -DDINGUX -DRS97 -DOSS_OUTPUT
 CXXFLAGS = $(CFLAGS)
 LDFLAGS =
-LIBS = -lstdc++ -lSDL -lz -lpthread -Wl,--as-needed -Wl,--gc-sections -flto -s
+LIBS = -lstdc++ -lSDL -lz -lpthread -lportaudio -Wl,--as-needed -Wl,--gc-sections -flto -s
 
 INCS = -I./src -I./src/handy-libretro -I./src/sdlemu
 
