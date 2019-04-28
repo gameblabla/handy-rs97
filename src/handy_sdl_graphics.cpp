@@ -71,7 +71,6 @@
 #endif
 #include "sdlemu/sdlemu_filter.h"
 #include "gui/gui.h"
-#include "scanlines.h"
 
 SDL_Surface *HandyBuffer_temp_surface, *Scanlines_surface[3];
 extern SDL_Joystick* joystick;

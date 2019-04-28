@@ -7,11 +7,8 @@
 #include <SDL/SDL_main.h>
 #include <SDL/SDL_timer.h>
 
-
 #include "sdlemu/sdlemu_filter.h"
 #include "gui/gui.h"
-#include "scanlines.h"
-
 
 extern SDL_Surface *HandyBuffer_temp_surface, *Scanlines_surface[3], *mainSurface, *HandyBuffer;
 extern int mRotation, LynxWidth, LynxHeight;
