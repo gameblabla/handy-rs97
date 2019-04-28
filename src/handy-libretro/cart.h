@@ -47,6 +47,8 @@
 
 #include "machine.h"
 
+extern int	mRotation;
+
 #define EPYX_HEADER_OLD 512
 #define EPYX_HEADER_NEW 410
 
@@ -172,7 +174,6 @@ class CCart : public CLynxBase
       UBYTE	*mCartBank1A;
       char	mName[33];
       char	mManufacturer[17];
-      ULONG	mRotation;
       bool      mAudinFlag;
       int	mHeaderLess;
 

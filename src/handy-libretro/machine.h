@@ -57,8 +57,8 @@ typedef int16_t SWORD;
 typedef uint16_t UWORD;
 
 // Longs should be 32-bits wide
-typedef signed long SLONG;
-typedef unsigned long ULONG;
+typedef int32_t SLONG;
+typedef uint32_t ULONG;
 
 // Read/Write Cycle definitions
 #define CPU_RDWR_CYC	5

@@ -55,7 +55,9 @@
 //#include "zlib.h"
 #include "scrc32.h"
 
+int	mRotation;
 extern int Invert;
+extern void Set_Rotation_Game();
 
 CCart::CCart(UBYTE *gamedata,ULONG gamesize)
 {
@@ -308,26 +310,28 @@ CCart::CCart(UBYTE *gamedata,ULONG gamesize)
 	else
 		Invert = 0;
 	
-	printf("Game CRC %d\n", mycrc);
+	printf("\Game nnCRC : 0%x\n", mycrc);
 	
 	/* Some games don't have a proper header or have incorrect controls. */
 	
 	switch(mycrc)
 	{
 		/* Klax , Rotate to the left */
-		case -330061704:
+		case 0x0ec53a878:
 		/* Gauntlet , Rotate to the left */
-		case -1018593358:
+		case 0x08e0908e5:
 			mRotation = CART_ROTATE_LEFT;
 			Invert = 2;
 		break;
 		
 		/* NFL Football , Rotate to the right */
-		case -1013434978:
+		case 0x0c398359e:
+		/* Centipede (Retail) , Rotate to the right */
+		case 0x0e38a0f69:
 		/* Centipede (Prototype) , Rotate to the right */
-		case -477491351:
+		case 0x071a2e46:
 		/* Lexis , Rotate to the right */
-		case 643240142:
+		case 0x0265710ce:
 			mRotation = CART_ROTATE_RIGHT;
 			Invert = 1;
 		break;

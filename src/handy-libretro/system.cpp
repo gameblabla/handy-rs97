@@ -437,17 +437,19 @@ CSystem::~CSystem()
 
 bool CSystem::IsZip(const char *filename)
 {
-   UBYTE buf[2];
-   FILE *fp;
+	uint8_t buf[2];
+	FILE *fp;
+	
+	fp = fopen(filename,"rb");
+	
+	if (fp)
+	{
+		fread(buf, 2, 1, fp);
+		fclose(fp);
+		return (memcmp(buf,"PK",2)==0);
+	}
 
-   if((fp=fopen(filename,"rb"))!=NULL)
-   {
-      fread(buf, 2, 1, fp);
-      fclose(fp);
-      return(memcmp(buf,"PK",2)==0);
-   }
-   if(fp)fclose(fp);
-   return FALSE;
+	return FALSE;
 }
 
 void CSystem::HLE_BIOS_FE00(void)
@@ -476,40 +478,40 @@ void CSystem::HLE_BIOS_FE19(void)
 
 void CSystem::HLE_BIOS_FE4A(void)
 {
-    UWORD addr=mRam->Peek(0x0005) | (mRam->Peek(0x0006)<<8);
+	UWORD addr=mRam->Peek(0x0005) | (mRam->Peek(0x0006)<<8);
 
-   // Load from Cart (loader blocks)
-      unsigned char buff[256];// maximum 5 blocks
-      unsigned char res[256];
+	// Load from Cart (loader blocks)
+	unsigned char buff[256];// maximum 5 blocks
+	unsigned char res[256];
 
-        buff[0]=mCart->Peek0();
-        int blockcount = 0x100 -  buff[0];
+	buff[0]=mCart->Peek0();
+	int blockcount = 0x100 -  buff[0];
 
-        for (int i = 1; i < 1+51*blockcount; ++i) // first encrypted loader
-      {
-         buff[i] = mCart->Peek0();
-      }
+	for (uint32_t i = 1; i < 1+51*blockcount; ++i) // first encrypted loader
+	{
+		buff[i] = mCart->Peek0();
+	}
 
-      lynx_decrypt(res, buff, 51);
+	lynx_decrypt(res, buff, 51);
 
-        for (int i = 0; i < 50*blockcount; ++i)
-      {
-          Poke_CPU(addr++, res[i]);
-      }
+	for (uint32_t i = 0; i < 50*blockcount; ++i)
+	{
+		Poke_CPU(addr++, res[i]);
+	}
 
-    // Load Block(s), decode to ($05,$06)
+	// Load Block(s), decode to ($05,$06)
     // jmp $200
 
-   C6502_REGS regs;
-   mCpu->GetRegs(regs);
-   regs.PC=0x0200;
-   mCpu->SetRegs(regs);
+	C6502_REGS regs;
+	mCpu->GetRegs(regs);
+	regs.PC=0x0200;
+	mCpu->SetRegs(regs);
 }
 
 void CSystem::HLE_BIOS_FF80(void)
 {
-    // initial jump from reset vector ... calls FE19
-    HLE_BIOS_FE19();
+	// initial jump from reset vector ... calls FE19
+	HLE_BIOS_FE19();
 }
 
 void CSystem::Reset(void)

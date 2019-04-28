@@ -61,7 +61,10 @@ CRom::CRom()
 	Reset();
 
 	// Initialise ROM
-	for(int loop=0;loop<ROM_SIZE;loop++) mRomData[loop]=DEFAULT_ROM_CONTENTS;
+	for(uint32_t loop=0;loop<ROM_SIZE;loop++)
+	{
+		mRomData[loop]=DEFAULT_ROM_CONTENTS;
+	}
 	// actually not part of Boot ROM but uninitialized otherwise
 	// Reset Vector etc
 	mRomData[0x1F8]=0x00;
