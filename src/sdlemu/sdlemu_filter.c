@@ -18,13 +18,16 @@
  */
 #include "sdlemu_filter.h"
 
-static Uint32 colorMask = 0xF7DEF7DE;
-static Uint32 lowPixelMask = 0x08210821;
-static Uint32 qcolorMask = 0xE79CE79C;
-static Uint32 qlowpixelMask = 0x18631863;
-static Uint32 redblueMask = 0xF81F;
-static Uint32 greenMask = 0x7E0;
+static uint32_t colorMask = 0xF7DEF7DE;
+static uint32_t lowPixelMask = 0x08210821;
+static uint32_t qcolorMask = 0xE79CE79C;
+static uint32_t qlowpixelMask = 0x18631863;
+static uint32_t redblueMask = 0xF81F;
+static uint32_t greenMask = 0x7E0;
 
+#define AVERAGE(z, x) ((((z) & 0xF7DEF7DE) >> 1) + (((x) & 0xF7DEF7DE) >> 1))
+#define AVERAGEHI(AB) ((((AB) & 0xF7DE0000) >> 1) + (((AB) & 0xF7DE) << 15))
+#define AVERAGELO(CD) ((((CD) & 0xF7DE) >> 1) + (((CD) & 0xF7DE0000) >> 17))
 
 uint32_t INTERPOLATE (uint32_t A, uint32_t B)
 {
@@ -74,6 +77,94 @@ void filter_bilinear(uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32
 		p += nextlineSrc;
 		q += nextlineDst << 1;
 	}
+}
+
+/* Found in Dmitry's Smagin SMS Plus Dingoo port. This was originally used for the Game Gear.
+ * Since the Atari Lynx has the same width in pixels, we can reuse said code. */
+void upscale_160x102_to_320xXXX(uint32_t* restrict dst, uint32_t* restrict src, uint32_t dst_height)
+{
+    uint32_t midh = dst_height / 2;
+    uint32_t Eh = 0;
+    uint32_t source = 0;
+    uint32_t dh = 0;
+    uint32_t i, j;
+    
+    for (i = 0; i < dst_height; i++)
+    {
+        source = dh * 160 / 2;
+        
+        for (j = 0; j < 320/8; j++)
+        {
+            uint32_t a, b, c, d, ab, cd;
+
+            __builtin_prefetch(dst + 4, 1);
+            __builtin_prefetch(src + source + 4, 0);
+
+            ab = src[source] & 0xF7DEF7DE;
+            cd = src[source + 1] & 0xF7DEF7DE;
+            
+			if (Eh >= midh) 
+            {
+				ab = AVERAGE(ab, src[source+160/2]);
+				cd = AVERAGE(cd, src[source+160/2+1]);
+			}
+
+            a = (ab & 0xFFFF) | (ab << 16);
+            b = (ab & 0xFFFF0000) | (ab >> 16);
+            c = (cd & 0xFFFF) | (cd << 16);
+            d = (cd & 0xFFFF0000) | (cd >> 16);
+
+            *dst++ = a;
+            *dst++ = b;
+            *dst++ = c;
+            *dst++ = d;
+
+            source += 2;
+
+        }
+
+        Eh += 102; if(Eh >= dst_height) { Eh -= dst_height; dh++; }
+    }
+}
+
+void upscale_160x102_to_320xXXX_noAveraging(uint32_t* restrict dst, uint32_t* restrict src, uint32_t dst_height)
+{
+    uint32_t midh = dst_height / 2;
+    uint32_t Eh = 0;
+    uint32_t source = 0;
+    uint32_t dh = 0;
+    uint32_t i, j;
+    
+    for (i = 0; i < dst_height; i++)
+    {
+        source = dh * 160 / 2;
+        
+        for (j = 0; j < 320/8; j++)
+        {
+            uint32_t a, b, c, d, ab, cd;
+
+            __builtin_prefetch(dst + 4, 1);
+            __builtin_prefetch(src + source + 4, 0);
+
+            ab = src[source] & 0xF7DEF7DE;
+            cd = src[source + 1] & 0xF7DEF7DE;
+
+            a = (ab & 0xFFFF) | (ab << 16);
+            b = (ab & 0xFFFF0000) | (ab >> 16);
+            c = (cd & 0xFFFF) | (cd << 16);
+            d = (cd & 0xFFFF0000) | (cd >> 16);
+
+            *dst++ = a;
+            *dst++ = b;
+            *dst++ = c;
+            *dst++ = d;
+
+            source += 2;
+
+        }
+
+        Eh += 102; if(Eh >= dst_height) { Eh -= dst_height; dh++; }
+    }
 }
 
 /* alekmaul's scaler taken from mame4all */

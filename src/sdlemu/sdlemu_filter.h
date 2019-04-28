@@ -28,7 +28,10 @@ extern "C" {
 
 extern void bitmap_scale(uint32_t startx, uint32_t starty, uint32_t viswidth, uint32_t visheight, uint32_t newwidth, uint32_t newheight,uint32_t pitchsrc,uint32_t pitchdest, uint16_t* __restrict__ src, uint16_t* __restrict__ dst);
 extern void filter_bilinear(uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32_t dstPitch, uint32_t width, uint32_t height);
+extern void Simple2x(u32 *srcPtr, u32 srcPitch, u32 *dstPtr, u32 dstPitch, int width, int height);
 
+extern void upscale_160x102_to_320xXXX(uint32_t* __restrict__ dst, uint32_t* __restrict__ src, uint32_t dst_height);
+extern void upscale_160x102_to_320xXXX_noAveraging(uint32_t* __restrict__ dst, uint32_t* __restrict__ src, uint32_t dst_height);
  
 #ifdef __cplusplus
 }

@@ -72,7 +72,7 @@
 #include "sdlemu/sdlemu_filter.h"
 #include "gui/gui.h"
 
-SDL_Surface *HandyBuffer_temp_surface, *Scanlines_surface[3];
+SDL_Surface *Scanlines_surface[3];
 extern SDL_Joystick* joystick;
 
 extern void upscale_320x240(uint32_t *src, uint32_t *dst, uint32_t height);
@@ -84,12 +84,6 @@ int	sdl_bpp_flag;
 void Clean_Surfaces()
 {
 	uint32_t i;
-
-	if (HandyBuffer_temp_surface)
-	{
-		SDL_FreeSurface(HandyBuffer_temp_surface);
-		HandyBuffer_temp_surface = NULL;
-	}
 	
 	for(i=0;i<3;i++)
 	{
@@ -195,12 +189,7 @@ int handy_sdl_video_setup(int rendertype, int fsaa, int fullscreen, int bpp, int
     // All the rendering is done in the graphics buffer and is then
     // blitted to the mainSurface and thus to the screen.
 	HandyBuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, LynxWidth, 168, sdl_bpp_flag, 0x00000000, 0x00000000, 0x00000000, 0x00000000);
-    
-    if (!HandyBuffer_temp_surface)
-    {
-		HandyBuffer_temp_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 320 , 320 , sdl_bpp_flag, 0x00000000, 0x00000000, 0x00000000, 0x00000000);
-	}
-    
+	
     /* Scanline specific code - Gameblabla */
     if (!Scanlines_surface[0])
     {

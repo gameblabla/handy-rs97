@@ -10,7 +10,7 @@
 #include "sdlemu/sdlemu_filter.h"
 #include "gui/gui.h"
 
-extern SDL_Surface *HandyBuffer_temp_surface, *Scanlines_surface[3], *mainSurface, *HandyBuffer;
+extern SDL_Surface *Scanlines_surface[3], *mainSurface, *HandyBuffer;
 extern int mRotation, LynxWidth, LynxHeight;
 extern int gui_ImageScaling;
 uint32_t Cut_Off_Y = 0;
@@ -36,32 +36,38 @@ void handy_sdl_draw_graphics(void)
 					{
 						/* Prefer Keeping Aspect Ratio */
 						case 0:
-							bitmap_scale(0,0,
-							LYNX_SINGLE_WIDTH,LYNX_SINGLE_HEIGHT,
-							LYNX_DOUBLE_WIDTH,LYNX_DOUBLE_HEIGHT,
-							HandyBuffer->w, mainSurface->w-LYNX_DOUBLE_WIDTH,
-							(uint16_t* __restrict__)HandyBuffer->pixels,(uint16_t* __restrict__)mainSurface->pixels+(mainSurface->w-(LYNX_DOUBLE_WIDTH))/2+(mainSurface->h-(LYNX_DOUBLE_HEIGHT))/2*mainSurface->w);
+							// (36*2 * 160) is the Y offset.
+							upscale_160x102_to_320xXXX_noAveraging((uint32_t* __restrict__)mainSurface->pixels + (36*2 * 160), (uint32_t* __restrict__)HandyBuffer->pixels, 204);
 						break;
 						case 1:
-							bitmap_scale(0, 0, LYNX_SINGLE_WIDTH, LynxHeight, mainSurface->w, mainSurface->h, HandyBuffer->w, 0, HandyBuffer->pixels, mainSurface->pixels);
+							// Linear filtering (fast upscaler)
+							upscale_160x102_to_320xXXX((uint32_t* __restrict__)mainSurface->pixels, (uint32_t* __restrict__)HandyBuffer->pixels, 240);
 						break;
 						case 2:
+							// Moves screen surface to the right screen position.
 							dst.x = 0;
 							dst.y = (mainSurface->h - LynxHeight*2) / 2;
+							// This avoids overdraw
 							dst2.x = 0;
 							dst2.y = 0;
 							dst2.w = LynxWidth*2;
 							dst2.h = LynxHeight*2;
-							bitmap_scale(0, 0, LynxWidth, LynxHeight, LynxWidth*2, LynxHeight*2, HandyBuffer->w, 0, HandyBuffer->pixels, HandyBuffer_temp_surface->pixels);
-							SDL_BlitSurface(Scanlines_surface[0], NULL, HandyBuffer_temp_surface, NULL);
-							SDL_BlitSurface(Scanlines_surface[2], NULL, HandyBuffer_temp_surface, NULL);
-							SDL_BlitSurface(HandyBuffer_temp_surface, &dst2, mainSurface, &dst);
+							// (36*2 * 160) is the Y offset.
+							upscale_160x102_to_320xXXX_noAveraging((uint32_t* __restrict__)mainSurface->pixels + (36*2 * 160), (uint32_t* __restrict__)HandyBuffer->pixels, 204);
+							
+							SDL_BlitSurface(Scanlines_surface[0], &dst2, mainSurface, &dst);
+							SDL_BlitSurface(Scanlines_surface[2], &dst2, mainSurface, &dst);
 						break;
 						case 3:
-							bitmap_scale(0, 0, LynxWidth, LynxHeight, LynxWidth*2, LynxHeight*2, HandyBuffer->w, 0, HandyBuffer->pixels, HandyBuffer_temp_surface->pixels);
-							SDL_BlitSurface(Scanlines_surface[0], NULL, HandyBuffer_temp_surface, NULL);
-							SDL_BlitSurface(Scanlines_surface[2], NULL, HandyBuffer_temp_surface, NULL);
-							bitmap_scale(0, 0, (LYNX_DOUBLE_WIDTH), (LYNX_DOUBLE_HEIGHT), mainSurface->w, mainSurface->h, HandyBuffer_temp_surface->w, 0, HandyBuffer_temp_surface->pixels, mainSurface->pixels);
+							// This avoids overdraw
+							dst2.x = 0;
+							dst2.y = 0;
+							dst2.w = mainSurface->w;
+							dst2.h = mainSurface->h;
+							upscale_160x102_to_320xXXX_noAveraging((uint32_t* __restrict__)mainSurface->pixels, (uint32_t* __restrict__)HandyBuffer->pixels, 240);
+							
+							SDL_BlitSurface(Scanlines_surface[0], &dst2, mainSurface, NULL);
+							SDL_BlitSurface(Scanlines_surface[2], &dst2, mainSurface, NULL);
 						break;
 					}
 				break;
@@ -117,13 +123,13 @@ void handy_sdl_draw_graphics(void)
 					dst2.y = 0;
 					dst2.w = LynxWidth*2;
 					dst2.h = LynxHeight*2;
-					
-					bitmap_scale(0, Cut_Off_Y, LynxWidth, LynxHeight, LynxWidth*2, LynxHeight*2, HandyBuffer->w, 0, HandyBuffer->pixels, HandyBuffer_temp_surface->pixels);
+				
 					bitmap_scale(0,0,
-					(LYNX_DOUBLE_WIDTH),LYNX_DOUBLE_HEIGHT,
+					(LYNX_SINGLE_WIDTH),LYNX_SINGLE_HEIGHT,
 					(LYNX_DOUBLE_WIDTH),mainSurface->h,
-					LynxWidth*2, mainSurface->w-((LYNX_DOUBLE_WIDTH)),
-					(uint16_t* __restrict__)HandyBuffer_temp_surface->pixels,(uint16_t* __restrict__)mainSurface->pixels+(mainSurface->w-(LYNX_DOUBLE_WIDTH))/2+(mainSurface->h-(mainSurface->h))/2*mainSurface->w);
+					LynxWidth, mainSurface->w-((LYNX_DOUBLE_WIDTH)),
+					(uint16_t* __restrict__)HandyBuffer->pixels,
+					(uint16_t* __restrict__)mainSurface->pixels+(mainSurface->w-(LYNX_DOUBLE_WIDTH))/2+(mainSurface->h-(mainSurface->h))/2*mainSurface->w);
 					SDL_BlitSurface(Scanlines_surface[1], NULL, mainSurface, NULL);
 					SDL_BlitSurface(Scanlines_surface[2], &dst2, mainSurface, &dst);
 				break;
@@ -132,10 +138,9 @@ void handy_sdl_draw_graphics(void)
 					dst.y = 0;
 					dst.w = mainSurface->w;
 					dst.h = mainSurface->h;
-					bitmap_scale(0, Cut_Off_Y, LynxWidth, LynxHeight, LynxWidth*2, LynxHeight*2, HandyBuffer->w, 0, HandyBuffer->pixels, HandyBuffer_temp_surface->pixels);
-					bitmap_scale(0, 0, LYNX_DOUBLE_WIDTH, LYNX_DOUBLE_HEIGHT, mainSurface->w, mainSurface->h, LynxWidth*2, 0, HandyBuffer_temp_surface->pixels, mainSurface->pixels);
+					bitmap_scale(0, Cut_Off_Y, LynxWidth, LynxHeight, mainSurface->w, mainSurface->h, HandyBuffer->w, 0, HandyBuffer->pixels, mainSurface->pixels);
 					SDL_BlitSurface(Scanlines_surface[1], &dst, mainSurface, NULL);
-					SDL_BlitSurface(Scanlines_surface[2], NULL, mainSurface, NULL);
+					SDL_BlitSurface(Scanlines_surface[2], &dst, mainSurface, NULL);
 				break;
 			}
 			break;
