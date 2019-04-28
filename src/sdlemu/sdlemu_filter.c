@@ -80,7 +80,9 @@ void filter_bilinear(uint8_t *srcPtr, uint32_t srcPitch, uint8_t *dstPtr, uint32
 }
 
 /* Found in Dmitry's Smagin SMS Plus Dingoo port. This was originally used for the Game Gear.
- * Since the Atari Lynx has the same width in pixels, we can reuse said code. */
+ * Since the Atari Lynx has the same width in pixels, we can reuse said code.
+ * Since SMS Plus SDL was under the GPLv2+, it should also be under the GPLv2+.
+ *  */
 void upscale_160x102_to_320xXXX(uint32_t* restrict dst, uint32_t* restrict src, uint32_t dst_height)
 {
     uint32_t midh = dst_height / 2;

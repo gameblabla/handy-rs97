@@ -663,8 +663,8 @@ void ShowMenu(MENU *menu)
 	ShowPreview(menu);
 
 	// print info string
-	print_string("Press B to return to game", COLOR_HELP_TEXT, COLOR_BG, 56, 220);
-	print_string("Handy RS97 libretro", COLOR_HELP_TEXT, COLOR_BG, 80, 2);
+	print_string("Press B to return to the game", COLOR_HELP_TEXT, COLOR_BG, 56, 220);
+	print_string("Handy RS-97 libretro", COLOR_HELP_TEXT, COLOR_BG, 80, 2);
 	print_string("Port by gameblabla", COLOR_HELP_TEXT, COLOR_BG, 80, 12);
 }
 

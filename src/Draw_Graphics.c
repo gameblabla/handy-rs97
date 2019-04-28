@@ -36,8 +36,8 @@ void handy_sdl_draw_graphics(void)
 					{
 						/* Prefer Keeping Aspect Ratio */
 						case 0:
-							// (36*2 * 160) is the Y offset.
-							upscale_160x102_to_320xXXX_noAveraging((uint32_t* __restrict__)mainSurface->pixels + (36*2 * 160), (uint32_t* __restrict__)HandyBuffer->pixels, 204);
+							// (18 * 160) is the Y offset.
+							upscale_160x102_to_320xXXX_noAveraging((uint32_t* __restrict__)mainSurface->pixels + (18 * 160), (uint32_t* __restrict__)HandyBuffer->pixels, 204);
 						break;
 						case 1:
 							// Linear filtering (fast upscaler)
@@ -47,13 +47,16 @@ void handy_sdl_draw_graphics(void)
 							// Moves screen surface to the right screen position.
 							dst.x = 0;
 							dst.y = (mainSurface->h - LynxHeight*2) / 2;
+							dst.w = LynxWidth*2;
+							dst.h = LynxHeight*2;
+							
 							// This avoids overdraw
 							dst2.x = 0;
 							dst2.y = 0;
 							dst2.w = LynxWidth*2;
 							dst2.h = LynxHeight*2;
-							// (36*2 * 160) is the Y offset.
-							upscale_160x102_to_320xXXX_noAveraging((uint32_t* __restrict__)mainSurface->pixels + (36*2 * 160), (uint32_t* __restrict__)HandyBuffer->pixels, 204);
+							// (18 * 160) is the Y offset.
+							upscale_160x102_to_320xXXX_noAveraging((uint32_t* __restrict__)mainSurface->pixels + (18 * 160), (uint32_t* __restrict__)HandyBuffer->pixels, 204);
 							
 							SDL_BlitSurface(Scanlines_surface[0], &dst2, mainSurface, &dst);
 							SDL_BlitSurface(Scanlines_surface[2], &dst2, mainSurface, &dst);
@@ -118,19 +121,21 @@ void handy_sdl_draw_graphics(void)
 				case 2:
 					dst.x = (mainSurface->w-LYNX_DOUBLE_WIDTH)/2;
 					dst.y = 0;
-					
+					dst.w = LynxWidth*2;
+					dst.h = mainSurface->h;
+							
 					dst2.x = 0;
 					dst2.y = 0;
 					dst2.w = LynxWidth*2;
-					dst2.h = LynxHeight*2;
+					dst2.h = mainSurface->h;
 				
-					bitmap_scale(0,0,
+					bitmap_scale(0,Cut_Off_Y,
 					(LYNX_SINGLE_WIDTH),LYNX_SINGLE_HEIGHT,
 					(LYNX_DOUBLE_WIDTH),mainSurface->h,
 					LynxWidth, mainSurface->w-((LYNX_DOUBLE_WIDTH)),
 					(uint16_t* __restrict__)HandyBuffer->pixels,
 					(uint16_t* __restrict__)mainSurface->pixels+(mainSurface->w-(LYNX_DOUBLE_WIDTH))/2+(mainSurface->h-(mainSurface->h))/2*mainSurface->w);
-					SDL_BlitSurface(Scanlines_surface[1], NULL, mainSurface, NULL);
+					SDL_BlitSurface(Scanlines_surface[1], &dst2, mainSurface, &dst);
 					SDL_BlitSurface(Scanlines_surface[2], &dst2, mainSurface, &dst);
 				break;
 				case 3:

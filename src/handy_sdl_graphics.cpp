@@ -74,11 +74,6 @@
 
 SDL_Surface *Scanlines_surface[3];
 extern SDL_Joystick* joystick;
-
-extern void upscale_320x240(uint32_t *src, uint32_t *dst, uint32_t height);
-extern void upscale_400x240(uint32_t *src, uint32_t *dst, uint32_t height);
-extern void upscale_480x272(uint32_t *src, uint32_t *dst, uint32_t height);
-
 int	sdl_bpp_flag;
 
 void Clean_Surfaces()
@@ -194,19 +189,25 @@ int handy_sdl_video_setup(int rendertype, int fsaa, int fullscreen, int bpp, int
     if (!Scanlines_surface[0])
     {
 		tmp = SDL_LoadBMP("scanlines.bmp");
-		SDL_SetColorKey(tmp, (SDL_SRCCOLORKEY | SDL_RLEACCEL), SDL_MapRGB(tmp->format, 255, 0, 255));
-		Scanlines_surface[0] = SDL_DisplayFormat(tmp);
-		SDL_FreeSurface(tmp);
-		SDL_SetAlpha(Scanlines_surface[0], SDL_SRCALPHA, 128);
+		if (tmp)
+		{
+			SDL_SetColorKey(tmp, (SDL_SRCCOLORKEY | SDL_RLEACCEL), SDL_MapRGB(tmp->format, 255, 0, 255));
+			Scanlines_surface[0] = SDL_DisplayFormat(tmp);
+			SDL_FreeSurface(tmp);
+			SDL_SetAlpha(Scanlines_surface[0], SDL_SRCALPHA, 128);
+		}
 	}
 	
 	if (!Scanlines_surface[1])
 	{
 		tmp = SDL_LoadBMP("scanlines_90.bmp");
-		SDL_SetColorKey(tmp, (SDL_SRCCOLORKEY | SDL_RLEACCEL), SDL_MapRGB(tmp->format, 255, 0, 255));
-		Scanlines_surface[1] = SDL_DisplayFormat(tmp);
-		SDL_FreeSurface(tmp);
-		SDL_SetAlpha(Scanlines_surface[1], SDL_SRCALPHA, 128);
+		if (tmp)
+		{
+			SDL_SetColorKey(tmp, (SDL_SRCCOLORKEY | SDL_RLEACCEL), SDL_MapRGB(tmp->format, 255, 0, 255));
+			Scanlines_surface[1] = SDL_DisplayFormat(tmp);
+			SDL_FreeSurface(tmp);
+			SDL_SetAlpha(Scanlines_surface[1], SDL_SRCALPHA, 128);
+		}
 	}
     
     if (!Scanlines_surface[2])
