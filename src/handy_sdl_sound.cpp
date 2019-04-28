@@ -166,7 +166,6 @@ int handy_sdl_audio_init(void)
 	aoformat.byte_format = AO_FMT_NATIVE;
 	
 	aodevice = ao_open_live(ao_default_driver_id(), &aoformat, NULL); // Live output
-	gAudioEnabled = 1;
 #elif defined(PORTAUDIO)
 	int32_t err;
 	err = Pa_Initialize();
@@ -236,16 +235,23 @@ void handy_sdl_close()
 {
 #ifdef PORTAUDIO
 	int32_t err;
-	err = Pa_CloseStream( apu_stream );
-	err = Pa_Terminate();	
+	if (apu_stream)
+	{
+		err = Pa_CloseStream( apu_stream );
+		err = Pa_Terminate();	
+	}
 #elif defined(LIBAO)
-	ao_close(aodevice);
-	ao_shutdown();
+	if (aodevice)
+	{
+		ao_close(aodevice);
+		ao_shutdown();
+	}
 #elif defined(OSS_OUTPUT)
 	if (oss_audio_fd >= 0)
 	{
 		close(oss_audio_fd);
 	}
+#elif defined(ALSA_OUTPUT)
 #else
 	SDL_PauseAudio(1);
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
@@ -254,18 +260,20 @@ void handy_sdl_close()
 
 void handy_sdl_sound_loop()
 {
-#if defined(PORTAUDIO) || defined(LIBAO) || defined(OSS_OUTPUT)
+#if defined(PORTAUDIO) || defined(LIBAO) || defined(OSS_OUTPUT) || defined(ALSA_OUTPUT)
 	mpLynx->Update();
 	if(gAudioBufferPointer >= HANDY_AUDIO_BUFFER_SIZE/2 && gAudioEnabled)
 	{
 		uint32_t f = gAudioBufferPointer;
 		gAudioBufferPointer = 0;	
 		#ifdef LIBAO
-		ao_play(aodevice, (char*)gAudioBuffer, f);
+		ao_play(aodevice, (char*)gAudioBuffer, f/4);
 		#elif defined(OSS_OUTPUT)
 		write(oss_audio_fd, gAudioBuffer, f );
+		#elif defined(ALSA_OUTPUT)
+		
 		#else
-		Pa_WriteStream( apu_stream, gAudioBuffer, f);
+		Pa_WriteStream( apu_stream, gAudioBuffer, f/4);
 		#endif
 	}
 #else // Assuming SDL

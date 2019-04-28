@@ -237,7 +237,7 @@ int  handy_sdl_on_key_down(SDL_KeyboardEvent key, int mask)
 						mask|=BUTTON_LEFT;
 					break;
 					case 2:
-						mask|=BUTTON_DOWN;
+						mask|=BUTTON_RIGHT;
 					break;
 				}
 				break;
@@ -332,7 +332,7 @@ int  handy_sdl_on_key_up(SDL_KeyboardEvent key, int mask)
 						mask&= ~BUTTON_LEFT;
 					break;
 					case 2:
-						mask&= ~BUTTON_DOWN;
+						mask&= ~BUTTON_RIGHT;
 					break;
 				}
 				break;

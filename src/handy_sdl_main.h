@@ -89,7 +89,6 @@ extern int				rendertype;             // SDL Rendertype
 extern int				stype;					// Scaling/Scanline Routine
 extern int              filter;					// Output Filter
 extern uint32_t           overlay_format;         // YUV Overlay format
-extern Uint8  		   *delta;
 
 inline	int 	handy_sdl_update(void);
 		void 	handy_sdl_rom_info(void);

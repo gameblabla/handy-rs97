@@ -82,8 +82,8 @@ SDL_Joystick *joystick;
 extern uint32_t Joystick_Down(uint32_t mask);
 
 /* Handy declarations */
-ULONG            *mpLynxBuffer;
-CSystem         *mpLynx;
+ULONG				*mpLynxBuffer;
+CSystem				*mpLynx;
 int                 mFrameSkip = 0;
 int                 mpBpp;                    // Lynx rendering bpp
 
@@ -94,9 +94,6 @@ int                LynxScale = 1;            // Factor to scale the display
 int                LynxLCD = 1;            // Emulate LCD Display
 int              LynxFormat;                // Lynx ROM format type
 int              LynxRotate;                // Lynx ROM rotation type
-#ifndef DINGUX
-uint32_t          overlay_format = SDL_YV12_OVERLAY; // YUV Overlay format
-#endif
 
 int                 emulation = 0;
 Uint8          *delta;
@@ -124,18 +121,6 @@ int                rendertype = 1;
 int                stype = 1;                // Scaling/Scanline routine.
 
 
-/*
-    Handy/SDL Filter selection
-
-    1 = SDLEmu v1 (compatible with al SDL versions)
-    2 = SDLEmu v2 (faster but might break in future SDL versions or on certain platforms)
-    3 = Pierre Doucet v1 (compatible but possiby slow)
-
-    Default = 1 (SDLEmu v1)
-*/
-
-int                filter = 6;                // Scaling/Scanline routine.
-
 
 /*
     Name                :     handy_sdl_update
@@ -148,10 +133,8 @@ int                filter = 6;                // Scaling/Scanline routine.
                             Handy WIN32 with minor tweaks for SDL. It is used for
                             basic throttle of the Handy core.
 */
-inline    int handy_sdl_update(void)
+inline int handy_sdl_update(void)
 {
-
-
         // Throttling code
         //
         if(gSystemCycleCount>gThrottleNextCycleCheckpoint)
@@ -214,6 +197,39 @@ inline    int handy_sdl_update(void)
 
 }
 
+
+extern SDL_Surface* HandyBuffer;
+extern int sdl_bpp_flag;
+extern int mRotation;
+/* Required for Rotate Right games like Gauntlet and Klax as they have an extra 8 pixels on the top */
+extern uint32_t Cut_Off_Y;
+
+void Set_Rotation_Game()
+{
+    switch(mRotation) 
+    {
+        case CART_NO_ROTATE:
+            LynxWidth = 160;
+            LynxHeight = 102;
+			Cut_Off_Y = 0;
+            break;
+        case CART_ROTATE_LEFT:
+            LynxWidth = 102;
+            LynxHeight = 160;
+			Cut_Off_Y = 8;
+        break;
+        case CART_ROTATE_RIGHT:
+            LynxWidth = 102;
+            LynxHeight = 160;
+			Cut_Off_Y = 0;
+		break;
+    }
+    
+    /* Don't clear the RGB surface as it will make it crash. Perhaps SDL does it on its own ??? */
+    /* Also height needs to be 8 pixels bigger for vertical games as those will need cropping. */
+	HandyBuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, LynxWidth, 168, sdl_bpp_flag, 0x00000000, 0x00000000, 0x00000000, 0x00000000);
+}
+
 /*
     Name                :     handy_sdl_rom_info
     Parameters          :     N/A
@@ -227,13 +243,14 @@ inline    int handy_sdl_update(void)
 */
 void handy_sdl_rom_info(void)
 {
-
     printf("Atari Lynx ROM Information\n");
 
     /* Retrieving Game Image information */
     printf("Cartname      : %s\n"   , mpLynx->CartGetName()         );
     printf("ROM Size      : %d kb\n", (int)mpLynx->CartSize()      );
     printf("Manufacturer  : %s\n"   , mpLynx->CartGetManufacturer() );
+
+	Set_Rotation_Game();
 
     /* Retrieving Game Image Rotatation */
     printf("Lynx Rotation : ");
@@ -278,25 +295,16 @@ void handy_sdl_rom_info(void)
             exit(EXIT_FAILURE);
             break;
     }
-
 }
 void handy_sdl_quit(void)
 {
     // Disable audio and set emulation to pause, then quit :)
     handy_sdl_close();
     emulation   = -1;
-
-#ifndef DINGUX
-    //Remove YUV Overlay
-    if ( rendertype == 3 )
-        handy_sdl_video_close();
-#endif
-
-    //Let is give some free memory
-	if (mpLynxBuffer != NULL) free(mpLynxBuffer);
-
-	/*if (HandyBuffer != NULL) SDL_FreeSurface(HandyBuffer);
-	if (mainSurface != NULL) SDL_FreeSurface(mainSurface);*/
+    
+    Clean_Surfaces();
+	if (HandyBuffer != NULL) SDL_FreeSurface(HandyBuffer);
+	if (mainSurface != NULL) SDL_FreeSurface(mainSurface);
 
     // Close SDL Subsystems
     SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);
@@ -374,8 +382,6 @@ int main(int argc, char *argv[])
     char load_filename[512];
     char romname[512];
     
-    printf("STARTY EMULATOR\n");
-
     // get bios path
     getcwd(load_filename, 512);
 
@@ -588,15 +594,13 @@ int main(int argc, char *argv[])
                 case SDL_KEYDOWN:
                     #ifdef DINGUX
                     if(handy_sdl_event.key.keysym.sym == SDLK_BACKSPACE) {
-                        //filter = (filter + 1) % 11;
-                        if(filter != 6) filter = 6; else filter = 0;
                         SDL_FillRect(mainSurface,NULL,SDL_MapRGBA(mainSurface->format, 0, 0, 0, 255));
                         SDL_Flip(mainSurface);
                         SDL_FillRect(mainSurface,NULL,SDL_MapRGBA(mainSurface->format, 0, 0, 0, 255));
                         SDL_Flip(mainSurface);
                         break;
                     }
-                    if(handy_sdl_event.key.keysym.sym == SDLK_ESCAPE || handy_sdl_event.key.keysym.sym == SDLK_3) {
+                    if(handy_sdl_event.key.keysym.sym == SDLK_ESCAPE || handy_sdl_event.key.keysym.sym == SDLK_END || handy_sdl_event.key.keysym.sym == SDLK_RCTRL) {
                         gui_Run();
                         KeyMask = 0;
                         break;

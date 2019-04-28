@@ -63,8 +63,17 @@
 #include <SDL/SDL_main.h>
 #include <SDL/SDL_timer.h>
 
+extern void Clean_Surfaces();
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern  void    handy_sdl_draw_graphics(void);
+#ifdef __cplusplus
+}
+#endif
+
 inline	void    handy_sdl_scale(void);
-inline  void    handy_sdl_draw_graphics(void);
 inline  void    handy_sdl_draw_filter(int filtertype, SDL_Surface *src, SDL_Surface *dst, Uint8 *delta);
 		int 	handy_sdl_video_setup(int rendertype, int fsaa, int fullscreen, int bpp, int scale, int accel, int sysnc);
 		void 	handy_sdl_video_init(int bpp);
