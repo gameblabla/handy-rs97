@@ -71,13 +71,36 @@
 #endif
 #include "sdlemu/sdlemu_filter.h"
 #include "gui/gui.h"
+#include "scanlines.h"
 
-static SDL_Surface* real_surface;
+SDL_Surface *HandyBuffer_temp_surface, *Scanlines_surface[3];
 extern SDL_Joystick* joystick;
 
 extern void upscale_320x240(uint32_t *src, uint32_t *dst, uint32_t height);
 extern void upscale_400x240(uint32_t *src, uint32_t *dst, uint32_t height);
 extern void upscale_480x272(uint32_t *src, uint32_t *dst, uint32_t height);
+
+int	sdl_bpp_flag;
+
+void Clean_Surfaces()
+{
+	uint32_t i;
+
+	if (HandyBuffer_temp_surface)
+	{
+		SDL_FreeSurface(HandyBuffer_temp_surface);
+		HandyBuffer_temp_surface = NULL;
+	}
+	
+	for(i=0;i<3;i++)
+	{
+		if (Scanlines_surface[i])
+		{
+			SDL_FreeSurface(Scanlines_surface[i]);
+			Scanlines_surface[i] = NULL;
+		}
+	}	
+}
 
 /*
     This is called also from gui when initializing for rom browser
@@ -116,55 +139,12 @@ int handy_sdl_video_early_setup(int surfacewidth, int surfaceheight, int sdl_bpp
 int handy_sdl_video_setup(int rendertype, int fsaa, int fullscreen, int bpp, int scale, int accel, int sync)
 {
     const    SDL_VideoInfo     *info;
-            uint32_t             videoflags;
-            int              value;
-            int                 sdl_bpp_flag;
-            int                 surfacewidth;
-            int                 surfaceheight;
-
-    // Since we first checked the rotation, based upon that information
-    // We setup the width and height of the display.
-    //
-    // If OpenGL rendering is selected, we choose 640x480 or 480x640 as
-    // output. OpenGL rendering can be funky with non-standard resolutions
-    // with buggy OpenGL drivers and/or videocards.
-    //
-    // This is really ugly but good enough for a first version :)
-    switch(LynxRotate) {
-        case MIKIE_NO_ROTATE:
-            LynxWidth  = 160;
-            LynxHeight = 102;
-#ifndef DINGUX
-            if ( rendertype != 2 )
-            {
-                surfacewidth  = LynxWidth * scale;
-                surfaceheight = LynxHeight * scale;
-            }
-            else
-            {
-                surfacewidth  = 640;
-                surfaceheight = 480;
-            }
-#endif
-            break;
-        case MIKIE_ROTATE_L:
-        case MIKIE_ROTATE_R:
-            LynxWidth  = 102;
-            LynxHeight = 160;
-#ifndef DINGUX
-            if ( rendertype != 2 )
-            {
-                surfacewidth  = LynxWidth * scale;
-                surfaceheight = LynxHeight * scale;
-            }
-            else
-            {
-                surfacewidth  = 480;
-                surfaceheight = 640;
-            }
-#endif
-            break;
-    }
+	uint32_t             videoflags;
+	int              value;
+	int                 surfacewidth;
+	int                 surfaceheight;
+	SDL_Surface* tmp;
+	extern void Set_Rotation_Game();
 
     info = SDL_GetVideoInfo();
 
@@ -200,50 +180,13 @@ int handy_sdl_video_setup(int rendertype, int fsaa, int fullscreen, int bpp, int
                     break;
             }
     }
+
     mpBpp = sdl_bpp_flag;
 
     printf("\nSDL Rendering : ");
-#ifdef DINGUX
-    videoflags = handy_sdl_video_setup_sdl(info);
-#else
-    switch(rendertype)
-    {
-        case 1:
-            videoflags = handy_sdl_video_setup_sdl(info);
-            break;
-        case 2:
-            videoflags = handy_sdl_video_setup_opengl(fsaa, accel, sync);
-            break;
-        case 3:
-            videoflags = handy_sdl_video_setup_yuv();
-            break;
-        default:
-            videoflags = handy_sdl_video_setup_sdl(info);
-            break;
-    }
-#endif
+    videoflags = SDL_HWSURFACE;
 
     printf("SDL Rendering : %dBPP\n", sdl_bpp_flag);
-
-/*
-    Quick fix for handling fullscreen on WIN32. Fullscreen seems to break when using
-    hardware surfaces in normal SDL rendering or when using a frame with OpenGL
-    rendering. It just goes back in windowed mode or displays it in the window res.
-*/
-#ifdef DINGUX
-    // ignore fullscreen for dingux
-#elif defined(HANDY_SDL_WIN32)
-    if (fullscreen)
-    {
-        if ( rendertype != 2 )
-            videoflags  = SDL_SWSURFACE | SDL_FULLSCREEN;
-        else
-            videoflags  = SDL_OPENGL | SDL_NOFRAME | SDL_FULLSCREEN;
-    }
-#else
-    if (fullscreen)
-        videoflags |= SDL_FULLSCREEN;
-#endif
 
     // setup SDL video mode
     handy_sdl_video_early_setup(surfacewidth, surfaceheight, sdl_bpp_flag, videoflags);
@@ -252,174 +195,52 @@ int handy_sdl_video_setup(int rendertype, int fsaa, int fullscreen, int bpp, int
     //
     // All the rendering is done in the graphics buffer and is then
     // blitted to the mainSurface and thus to the screen.
-    HandyBuffer = SDL_CreateRGBSurface(SDL_SWSURFACE,
-        LynxWidth,
-        LynxHeight,
-        sdl_bpp_flag,
-        0x00000000, 0x00000000, 0x00000000, 0x00000000);
-	printf("Width %d, Height %d\n", LynxWidth, LynxHeight);
-
+	HandyBuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, LynxWidth, 168, sdl_bpp_flag, 0x00000000, 0x00000000, 0x00000000, 0x00000000);
+    
+    if (!HandyBuffer_temp_surface)
+    {
+		HandyBuffer_temp_surface = SDL_CreateRGBSurface(SDL_SWSURFACE, 320 , 320 , sdl_bpp_flag, 0x00000000, 0x00000000, 0x00000000, 0x00000000);
+	}
+    
+    /* Scanline specific code - Gameblabla */
+    if (!Scanlines_surface[0])
+    {
+		tmp = SDL_LoadBMP("scanlines.bmp");
+		SDL_SetColorKey(tmp, (SDL_SRCCOLORKEY | SDL_RLEACCEL), SDL_MapRGB(tmp->format, 255, 0, 255));
+		Scanlines_surface[0] = SDL_DisplayFormat(tmp);
+		SDL_FreeSurface(tmp);
+		SDL_SetAlpha(Scanlines_surface[0], SDL_SRCALPHA, 128);
+	}
+	
+	if (!Scanlines_surface[1])
+	{
+		tmp = SDL_LoadBMP("scanlines_90.bmp");
+		SDL_SetColorKey(tmp, (SDL_SRCCOLORKEY | SDL_RLEACCEL), SDL_MapRGB(tmp->format, 255, 0, 255));
+		Scanlines_surface[1] = SDL_DisplayFormat(tmp);
+		SDL_FreeSurface(tmp);
+		SDL_SetAlpha(Scanlines_surface[1], SDL_SRCALPHA, 128);
+	}
+    
+    if (!Scanlines_surface[2])
+    {
+		Scanlines_surface[2] = SDL_CreateRGBSurface(SDL_SWSURFACE, 320 , 320 , sdl_bpp_flag, 0x00000000, 0x00000000, 0x00000000, 0x00000000);
+		SDL_FillRect(Scanlines_surface[2], NULL, SDL_MapRGB(Scanlines_surface[2]->format, 255, 255, 255));
+		SDL_SetAlpha(Scanlines_surface[2], SDL_SRCALPHA, 128);
+	}
+	
     if (HandyBuffer == NULL)
     {
         printf("Could not create secondary SDL surface: %s\n", SDL_GetError());
         return 0;
     }
 
-#ifndef DINGUX
-    if (rendertype == 2 )
-    // Let us setup OpenGL and our rendering texture. We give the src (HandyBuffer) and the
-    // dst (mainSurface) display as well as the automatic bpp selection as options so that
-    // our texture is automaticly created :)
-    {
-    sdlemu_init_opengl(HandyBuffer, mainSurface, 1 /*method*/,
-            fsaa /*texture type (linear, nearest)*/,
-            0 /* Automatic bpp selection based upon src */);
-    }
-
-    if (rendertype == 3 )
-    {
-            sdlemu_init_overlay(mainSurface, overlay_format, LynxWidth , LynxHeight );
-    }
-#endif
-
     /* Setting Window Caption */
     SDL_WM_SetCaption( "Handy/SDL", "HANDY");
     SDL_EnableKeyRepeat( 0, 0); // Best options to use
     SDL_EventState( SDL_MOUSEMOTION, SDL_IGNORE); // Ignoring mouse stuff.
     SDL_ShowCursor( 0 ); // Removing mouse from window. Very handy in fullscreen mode :)
-
-    delta = (uint8*)malloc(LynxWidth*LynxHeight*sizeof(uint32_t)*4);
-    memset(delta, 255, LynxWidth*LynxHeight*sizeof(uint32_t)*4);
-
-    Init_2xSaI (565);
-    systemRedShift   = sdlCalculateShift(HandyBuffer->format->Rmask);
-    systemGreenShift = sdlCalculateShift(HandyBuffer->format->Gmask);
-    systemBlueShift  = sdlCalculateShift(HandyBuffer->format->Bmask);
-
-
-    return 1;
-}
-
-/*
-    Name                :     handy_sdl_video_setup_opengl
-    Parameters          :     fsaa ( 0 = off, 1 = on ) -> OpenGL specific
-    Function            :   Initialisation of OpenGL videodriver.
-
-    Uses                :   N/A
-
-    Information            :    This is our setup function for getting our desired
-                            OpenGL video setup.
-*/
-#ifndef DINGUX
-int handy_sdl_video_setup_opengl(int fsaa,int accel, int sync)
-{
-    uint32_t             videoflags;
-
-    printf("OpenGL\n");
-    // Initializing SDL attributes with OpenGL
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE  , 0);
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-        printf("OpenGL OPTION : Enable  SDL_GL_DOUBLEBUFFER\n");
-
-    // Setup FSAA
-    if ( fsaa )
-    {
-        SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
-        SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, fsaa );
-        printf("OpenGL FSAA   : Enable  SDL_GL_MULTISAMPLEBUFFERS\n");
-    }
-    else
-    {
-        printf("OpenGL FSAA   : Disable SDL_GL_MULTISAMPLEBUFFERS\n");
-//        SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 0 );
-        accel = 0;
-    }
-
-    if ( accel )
-    {
-        printf("OpenGL ACCEL  : Enable  SDL_GL_ACCELERATED_VISUAL\n");
-        SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
-    }
-    else
-    {
-        printf("OpenGL ACCEL  : Disable SDL_GL_ACCELERATED_VISUAL\n");
-//        SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 0 );
-    }
-
-    if ( sync )
-    {
-        printf("OpenGL VSYNC  : Enable  SDL_GL_SWAP_CONTROL\n");
-        SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1 );
-    }
-    else
-    {
-        printf("OpenGL VSYNC  : Disable SDL_GL_SWAP_CONTROL\n");
-        SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 0 );
-    }
-
-    videoflags = SDL_OPENGL;
-
-    return videoflags;
-
-}
-#endif
-
-/*
-    Name                :     handy_sdl_video_setup_yuv
-    Parameters          :     N/A
-    Function            :   Initialisation of YUV videodriver.
-
-    Uses                :   N/A
-
-    Information            :    This is our setup function for getting our desired
-                            YUV video setup.
-*/
-#ifndef DINGUX
-int handy_sdl_video_setup_yuv(void)
-{
-    uint32_t             videoflags;
-
-    printf("YUV Overlay\n");
-
-    videoflags = SDL_SWSURFACE;
     
-    return videoflags;
-}
-#endif
-
-/*
-    Name                :     handy_sdl_video_setup_sdl
-    Parameters          :     info (SDL videoinfo)
-    Function            :   Initialisation of SDL videodriver.
-
-    Uses                :   N/A
-
-    Information            :    This is our setup function for getting our desired
-                            SDL video setup. Using info it automaticly checks
-                            if we can use hardware acceleration or going back
-                            to software display.
-*/
-int handy_sdl_video_setup_sdl(const SDL_VideoInfo *info)
-{
-    uint32_t             videoflags;
-#ifdef DINGUX
-    videoflags = SDL_HWSURFACE
-    ;
-#else
-    if (info->hw_available)
-    {
-        printf("SDL Hardware\n");
-        videoflags = SDL_HWSURFACE | SDL_HWPALETTE;
-
-        if (info->blit_hw) videoflags |= SDL_HWACCEL;
-    }
-    else
-    {
-            printf("SDL Software\n");
-            videoflags = SDL_SWSURFACE;
-    }
-#endif
-    return videoflags;
+    return 1;
 }
 
 /*
@@ -486,7 +307,6 @@ uint8_t *handy_sdl_display_fake_callback(uint32_t objref)
 
 uint8_t *handy_sdl_display_callback(ULONG objref)
 {
-    int filter =  1;
     // Time to render the contents of mLynxBuffer to the SDL gfxBuffer.
     // Now to blit the contents of gfxBuffer to our main SDL surface.
     handy_sdl_draw_graphics();
@@ -497,193 +317,3 @@ uint8_t *handy_sdl_display_callback(ULONG objref)
     
     return (uint8_t *)mpLynxBuffer;
 }
-
-extern int gui_ImageScaling;
-
-inline void handy_sdl_draw_graphics(void)
-{
-	Uint8 *dst_offset;
-	SDL_Rect dst;
-	if(SDL_MUSTLOCK(mainSurface)) SDL_LockSurface(mainSurface);
-	
-	if (mpLynx->CartGetRotate() == 0)
-	{
-			switch(mainSurface->w) 
-			{
-				case 320:
-					dst.x = 0;
-					if (gui_ImageScaling == 0) dst.y = ((mainSurface->h - (LynxHeight*2))/2);
-					else dst.y = 0;
-					dst.w = (LynxWidth*2);
-					if (gui_ImageScaling == 0) dst.h = (LynxHeight*2);
-					else dst.h = mainSurface->h;
-					SDL_SoftStretch(HandyBuffer, NULL, mainSurface, &dst);
-				break;
-				case 400:
-					dst.x = 40;
-					if (gui_ImageScaling == 0) dst.y = ((mainSurface->h - (LynxHeight*2))/2);
-					else dst.y = 0;
-					dst.w = (LynxWidth*2);
-					if (gui_ImageScaling == 0) dst.h = (LynxHeight*2);
-					else dst.h = mainSurface->h;
-					SDL_SoftStretch(HandyBuffer, NULL, mainSurface, &dst);
-				break;
-				case 480:
-					dst.x = 0;
-					dst.y = 0;
-					dst.w = mainSurface->w;
-					dst.h = mainSurface->h;
-					SDL_SoftStretch(HandyBuffer, NULL, mainSurface, &dst);
-				break;
-			}
-	}
-	else
-	{
-		SDL_Rect dst;
-		dst.y = 0;
-		dst.h = mainSurface->h;
-		if (gui_ImageScaling == 0)
-		{
-			dst.x = (mainSurface->w - (LynxWidth*2))/2;
-			dst.w = (LynxWidth*2);
-		}
-		else
-		{
-			dst.x = 0;
-			dst.w = mainSurface->w;
-		}
-		SDL_SoftStretch(HandyBuffer, NULL, mainSurface, &dst);
-	}
-	
-	if(SDL_MUSTLOCK(mainSurface)) SDL_UnlockSurface(mainSurface);
-}
-
-#ifndef DINGUX
-inline void handy_sdl_scale(void)
-{
-    Uint8             bpp;
-    char *dcp, *scp, *olddcp;
-    int   x, y, *sip, *dip, *olddip, i;
-    long *dlp, *slp, *olddlp;
-    int increment, copysize;
-
-    bpp = mainSurface->format->BytesPerPixel;
-
-    // SLOW !!!
-    if (SDL_MUSTLOCK(mainSurface)) SDL_LockSurface(mainSurface);
-
-    increment = LynxScale*(LynxScale-1)*LynxWidth;
-    copysize = increment*bpp;
-
-    switch (bpp)
-    {
-        case 1:
-            scp=(char *) HandyBuffer->pixels;
-            dcp=(char *) mainSurface->pixels;
-            for (y=0; y< LynxHeight; y++)
-            {
-                olddcp=dcp;
-                for (x=0; x<LynxWidth; x++)
-                {
-                    for (i=0; i<LynxScale; i++)
-                    {
-                        *dcp=*scp;
-                        dcp++;
-                    }
-                        scp++;
-                }
-                if (!LynxLCD)
-                    memcpy (dcp, olddcp, copysize);
-
-                dcp+=increment;
-            }
-            break;
-        case 2:
-            sip=(int *) HandyBuffer->pixels;
-            dip=(int *) mainSurface->pixels;
-            for (y=0; y<= LynxHeight; y++)
-            {
-                olddip=dip;
-                for (x=0; x<=LynxWidth; x++)
-                {
-                    for (i=0; i<LynxScale; i++)
-                    {
-                        *dip=*sip;
-                        dip++;
-                    }
-                    sip++;
-                }
-                if (!LynxLCD)
-                    memcpy (dip, olddip, copysize);
-
-                dip+=increment;
-            }
-            break;
-        case 3:
-            // REALLY SLOW
-            scp=(char *) HandyBuffer->pixels;
-            dcp=(char *) mainSurface->pixels;
-            for (y=0; y< LynxHeight; y++)
-            {
-                olddcp=dcp;
-                for (x=0; x<LynxWidth; x++)
-                {
-                    for (i=0; i<LynxScale; i++)
-                    {
-                        *dcp=*scp; dcp++;
-                        *dcp=*scp; dcp++;
-                        *dcp=*scp; dcp++;
-                    }
-                    scp+=3;
-                }
-                if (!LynxLCD)
-                    memcpy (dcp, olddcp, copysize);
-
-                dcp+=3*increment;
-            }
-            break;
-        case 4:
-        default:
-            slp=(long *) HandyBuffer->pixels;
-            dlp=(long *) mainSurface->pixels;
-            for (y=0; y< LynxHeight; y++)
-            {
-                olddlp=dlp;
-                for (x=0; x<LynxWidth; x++)
-                {
-                    for (i=0; i<LynxScale; i++)
-                    {
-                        *dlp=*slp;
-                        dlp++;
-                    }
-                    slp++;
-                }
-                if (!LynxLCD)
-                    memcpy (dlp, olddlp, copysize);
-
-                dlp+=increment;
-            }
-            break;
-    }
-
-    if(SDL_MUSTLOCK(mainSurface)) SDL_UnlockSurface (mainSurface);
-
-}
-#endif
-/*
-    Name                :     handy_sdl_video_close
-    Parameters          :     N/A
-    Function            :   Handy/SDL Video destroy function.
-
-    Uses                :   mpLynxBuffer ( Handy core rendering buffer )
-                            HandyBuffer  ( Handy/SDL buffer display )
-
-    Information            :    Renders the graphics from HandyBuffer to
-                            the main surface.
-*/
-#ifndef DINGUX
-void    handy_sdl_video_close(void)
-{
-    sdlemu_close_overlay();
-}
-#endif
