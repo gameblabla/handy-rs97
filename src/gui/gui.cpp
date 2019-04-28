@@ -54,7 +54,7 @@ extern char rom_name_with_no_ext[128]; // name if current rom, used for load/sav
 /* SDL declarations */
 extern SDL_Surface *HandyBuffer; // Our Handy/SDL display buffer
 extern SDL_Surface *mainSurface; // Our Handy/SDL primary display
-SDL_Surface *menuSurface = NULL; // menu rendering
+SDL_Surface *menuSurface = NULL, *Game_Surface_Preview; // menu rendering
 
 int Invert = 0;
 
@@ -97,7 +97,7 @@ typedef struct {
 	MENUITEM *m; // array of items
 } MENU;
 
-const char* gui_ScaleNames[] = {"Prefer Aspect", "fullscreen"};
+const char* gui_ScaleNames[] = {"Prefer Aspect", "fullscreen", "Scanlines", "Scanlines/Full"};
 const char* gui_YesNo[] = {"no", "yes"};
 
 MENUITEM gui_MainMenuItems[] = {
@@ -112,7 +112,7 @@ MENUITEM gui_MainMenuItems[] = {
 MENU gui_MainMenu = { 6, 0, (MENUITEM *)&gui_MainMenuItems };
 
 MENUITEM gui_ConfigMenuItems[] = {
-	{(const char *)"Upscale  : ", &gui_ImageScaling, 1, (const char **)&gui_ScaleNames, NULL},
+	{(const char *)"Upscale  : ", &gui_ImageScaling, 3, (const char **)&gui_ScaleNames, NULL},
 	//{(char *)"Frameskip: ", &gui_Frameskip, 9, NULL, NULL},
 	//{(char *)"Show fps : ", &gui_Show_FPS, 1, (char **)&gui_YesNo, NULL},
 	{(const char *)"Swap A/B : ", &gui_SwapAB, 1, (const char **)&gui_YesNo, NULL}
@@ -203,10 +203,9 @@ void gui_SaveState()
 {
 	char savename[512];
 
-	sprintf(savename, "%s/%s.%i.img", config_full_path, rom_name_with_no_ext, gui_LoadSlot);
-	FILE *fp = fopen(savename, "wb");
-	fwrite((void *)mpLynxBuffer, 1, 160 * 102 * 2, fp);
-	fclose(fp);
+	sprintf(savename, "%s/%s.%i.bmp", config_full_path, rom_name_with_no_ext, gui_LoadSlot);
+				
+	SDL_SaveBMP(HandyBuffer, savename);
 
 	sprintf(savename, "%s/%s.%i.sav", config_full_path, rom_name_with_no_ext, gui_LoadSlot);
 	//printf("Save state: %s\n", savename);
@@ -296,8 +295,16 @@ s32 load_file(const char **wildcards, char *result)
 		// DEBUG
 		//printf("Current directory: %s\n", current_dir_name);
 
-		do {
-			if(current_dir) current_file = readdir(current_dir); else current_file = NULL;
+		do 
+		{
+			if (current_dir)
+			{
+				current_file = readdir(current_dir);
+			}
+			else
+			{
+				current_file = NULL;
+			}
 
 			if(current_file) {
 				file_name = current_file->d_name;
@@ -351,7 +358,7 @@ s32 load_file(const char **wildcards, char *result)
 		//for(i = 0; i < num_dirs; i++) printf("%s\n", dir_list[i]);
 		//for(i = 0; i < num_files; i++) printf("%s\n", file_list[i]);
 
-		closedir(current_dir);
+		if (current_dir) closedir(current_dir);
 
 		current_dir_length = strlen(current_dir_name);
 
@@ -374,7 +381,7 @@ s32 load_file(const char **wildcards, char *result)
 			//flip_screen();
 			SDL_FillRect(menuSurface, NULL, COLOR_BG);
 			print_string(current_dir_short, COLOR_ACTIVE_ITEM, COLOR_BG, 0, 0);
-			print_string("Press SELECT to return to the main menu", COLOR_HELP_TEXT, COLOR_BG, 5, 220);
+			print_string("Press SELECT/B to return to the main menu", COLOR_HELP_TEXT, COLOR_BG, 5, 220);
 			for(i = 0, current_file_number = i + current_file_scroll_value; i < FILE_LIST_ROWS; i++, current_file_number++) {
 				if(current_file_number < num_files) {
 					strncpy(print_buffer,file_list[current_file_number], 38);
@@ -401,9 +408,11 @@ s32 load_file(const char **wildcards, char *result)
 			// Catch input
 			// change to read key state later
 			while(SDL_PollEvent(&gui_event)) {
-				if(gui_event.type == SDL_KEYDOWN) {
-					if(gui_event.key.keysym.sym == SDLK_RETURN) { // DINGOO A - apply parameter or enter submenu
-					//if(gui_event.key.keysym.sym == SDLK_LCTRL) { // DINGOO A - apply parameter or enter submenu
+				if(gui_event.type == SDL_KEYDOWN) 
+				{
+					// DINGOO A - apply parameter or enter submenu
+					if(gui_event.key.keysym.sym == SDLK_RETURN || gui_event.key.keysym.sym == SDLK_LCTRL) 
+					{
 						if(current_column == 1) {
 							repeat = 0;
 							chdir(dir_list[current_dir_selection]);
@@ -417,8 +426,9 @@ s32 load_file(const char **wildcards, char *result)
 							}
 						}
 					}
-					if(gui_event.key.keysym.sym == SDLK_ESCAPE) { // DINGOO B - exit or back to previous menu
-					//if(gui_event.key.keysym.sym == SDLK_LALT) { // DINGOO B - exit or back to previous menu
+					// DINGOO B - exit or back to previous menu
+					if(gui_event.key.keysym.sym == SDLK_ESCAPE || gui_event.key.keysym.sym == SDLK_LALT) 
+					{
 						return_value = -1;
 						repeat = 0;
 						break;
@@ -487,11 +497,35 @@ s32 load_file(const char **wildcards, char *result)
 		}
 
 		// free pointers
-		for(i = 0; i < num_files; i++) free(file_list[i]);
-		free(file_list);
+		for(i = 0; i < num_files; i++)
+		{
+			if (file_list[i])
+			{
+				free(file_list[i]);
+				file_list[i] = NULL;
+			}
+		}
+		
+		if (file_list)
+		{
+			free(file_list);
+			file_list = NULL;
+		}
 
-		for(i = 0; i < num_dirs; i++) free(dir_list[i]);
-		free(dir_list);
+		for(i = 0; i < num_dirs; i++)
+		{
+			if (dir_list[i])
+			{
+				free(dir_list[i]);
+				dir_list[i] = NULL;
+			}
+		}
+		
+		if (dir_list)
+		{
+			free(dir_list);
+			dir_list = NULL;
+		}
 	}
 
 	return return_value;
@@ -546,30 +580,62 @@ int gui_LoadFile(char *romname)
 void ShowPreview(MENU *menu)
 {
 	char prename[256];
-	static char prebuffer[160 * 102 * 2];
+	static uint8_t prebuffer[160 * 160 * 2];
+	uint32_t i;
+	SDL_Rect dst, dst2;
+	SDL_Surface *tmp;
 
-	if(menu == &gui_MainMenu && (menu->itemCur == 2 || menu->itemCur == 3)) {
-		if(loadslot != gui_LoadSlot) {
+	if(menu == &gui_MainMenu && (menu->itemCur == 2 || menu->itemCur == 3)) 
+	{
+		if(loadslot != gui_LoadSlot) 
+		{
 			// create preview name
-			sprintf(prename, "%s/%s.%i.img", config_full_path, rom_name_with_no_ext, gui_LoadSlot);
+			sprintf(prename, "%s/%s.%i.bmp", config_full_path, rom_name_with_no_ext, gui_LoadSlot);
+			
+			if (Game_Surface_Preview)
+			{
+				SDL_FreeSurface(Game_Surface_Preview);
+				Game_Surface_Preview = NULL;
+			}
+			
 			// check if file exists
-			FILE *fp = fopen(prename, "rb");
-			if(fp) {
-				fread(prebuffer, 1, 160 * 102 * 2, fp);
-				fclose(fp);
-			} else memset(prebuffer, 0 , 160 * 102 * 2);
+			tmp = SDL_LoadBMP(prename);
+			if (tmp)
+			{
+				Game_Surface_Preview = SDL_DisplayFormat(tmp);
+				SDL_FreeSurface(tmp);
+				tmp = NULL;
+			}
 			loadslot = gui_LoadSlot; // do not load img file each time
 		}
-		// show preview
-		for(int y = 0; y < 102; y++) memcpy((char *)menuSurface->pixels + (24 + y) * 320*2 + 80*2, prebuffer + y * 320, 320);
-	} else {
-		if(HandyBuffer != NULL) {
-			SDL_Rect dst;
+		
+		if (Game_Surface_Preview) 
+		{
 			dst.x = 80;
 			dst.y = 24;
 			dst.w = 160;
 			dst.h = 102;
-			SDL_SoftStretch(HandyBuffer, 0, menuSurface, &dst);
+			dst2.x = 0;
+			dst2.y = 0;
+			dst2.w = LynxWidth;
+			dst2.h = LynxHeight;
+			SDL_SoftStretch(Game_Surface_Preview, &dst2, menuSurface, &dst);
+		}
+		//for(int y = 0; y < 102; y++) memcpy((char *)menuSurface->pixels + (24 + y) * 320*2 + 80*2, prebuffer + y * 320, 320);
+	}
+	else
+	{
+		if (HandyBuffer) 
+		{
+			dst.x = 80;
+			dst.y = 24;
+			dst.w = 160;
+			dst.h = 102;
+			dst2.x = 0;
+			dst2.y = 0;
+			dst2.w = LynxWidth;
+			dst2.h = LynxHeight;
+			SDL_SoftStretch(HandyBuffer, &dst2, menuSurface, &dst);
 		}
 	}
 }
@@ -598,8 +664,8 @@ void ShowMenu(MENU *menu)
 
 	// print info string
 	print_string("Press B to return to game", COLOR_HELP_TEXT, COLOR_BG, 56, 220);
-	print_string("Handy RS97 libretro", COLOR_HELP_TEXT, COLOR_BG, 44, 2);
-	print_string("Port by gameblabla", COLOR_HELP_TEXT, COLOR_BG, 4, 12);
+	print_string("Handy RS97 libretro", COLOR_HELP_TEXT, COLOR_BG, 80, 2);
+	print_string("Port by gameblabla", COLOR_HELP_TEXT, COLOR_BG, 80, 12);
 }
 
 /*
@@ -612,10 +678,12 @@ void gui_MainMenuRun(MENU *menu)
 
 	done = FALSE;
 
-	while(!done) {
+	while(!done) 
+	{
 		mi = menu->m + menu->itemCur; // pointer to highlit menu option
 
-		while(SDL_PollEvent(&gui_event)) {
+		while(SDL_PollEvent(&gui_event)) 
+		{
 			if(gui_event.type == SDL_KEYDOWN) {
 				// DINGOO A - apply parameter or enter submenu
 				//if(gui_event.key.keysym.sym == SDLK_RETURN) if(mi->itemOnA != NULL) (*mi->itemOnA)();
@@ -667,11 +735,7 @@ void get_config_path()
 		// if HOME found, append to config_full_path
 		if(env != NULL) strcat(config_full_path, env);
 		strcat(config_full_path, "/.handy"); 
-		mkdir(config_full_path
-		#ifndef WIN32
-		, 0777
-		#endif
-		);
+		mkdir(config_full_path, 0755);
 
 		// return if not read-only, otherwise we are on rzx50 or a380 dingux
 		if(errno != EROFS && errno != EACCES && errno != EPERM) return;
@@ -683,7 +747,7 @@ void get_config_path()
 		strcat(config_full_path, "/.handy");
 		mkdir(config_full_path
 		#ifndef WIN32
-		, 0777
+		, 0755
 		#endif
 		);
 
@@ -706,9 +770,7 @@ void gui_Run()
 
 	SDL_EnableKeyRepeat(/*SDL_DEFAULT_REPEAT_DELAY*/ 150, /*SDL_DEFAULT_REPEAT_INTERVAL*/30);
 	gui_ClearScreen();
-	gui_ImageScaling = (filter == 6 ? 0 : 1); // remove later, temporal hack
 	gui_MainMenuRun(&gui_MainMenu);
-	filter = (gui_ImageScaling == 0 ? 6 : 0); // remove later, temporal hack
 	if(gui_SwapAB == 0) {
     BT_A = SDLK_LCTRL;
     BT_B = SDLK_LALT;

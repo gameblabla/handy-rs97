@@ -1,12 +1,12 @@
 /*
 	Header for gui.cpp
 */
-typedef unsigned char u8;
-typedef signed char s8;
-typedef unsigned short int u16;
-typedef signed short int s16;
+typedef uint8_t u8;
+typedef int8_t s8;
+typedef uint16_t u16;
+typedef int16_t s16;
 typedef uint32_t u32;
-typedef signed int s32;
+typedef int32_t s32;
 typedef unsigned long long int u64;
 typedef signed long long int s64;
 
