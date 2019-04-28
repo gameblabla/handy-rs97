@@ -3,6 +3,8 @@
 mkdir -p ipkg/home/retrofw/emus/handy
 mkdir -p ipkg/home/retrofw/apps/gmenu2x/sections/emulators
 cp handy ipkg/home/retrofw/emus/handy/handy
+cp scanlines.bmp ipkg/home/retrofw/emus/handy/scanlines.bmp
+cp scanlines_90.bmp ipkg/home/retrofw/emus/handy/scanlines_90.bmp
 cp handy.png ipkg/home/retrofw/emus/handy/handy.png
 
 cd ipkg
@@ -39,8 +41,8 @@ selectordir=/home/retrofw/roms
 selectorfilter=.lnx,.bin,.zip
 ' > home/retrofw/apps/gmenu2x/sections/emulators/handy
 
-tar -czvf control.tar.gz control
-tar -czvf data.tar.gz home
+tar -czvf control.tar.gz control --owner=0 --group=0
+tar -czvf data.tar.gz home --owner=0 --group=0
 ar rv ../handy.ipk control.tar.gz data.tar.gz debian-binary
 
 cd ..

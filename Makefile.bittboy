@@ -11,15 +11,15 @@
 
 OSTYPE=dingux
 
-CC			= /opt/rs97-toolchain/bin/mipsel-linux-gcc
-CXX 		= /opt/rs97-toolchain/bin/mipsel-linux-g++
-LD         	= /opt/rs97-toolchain/bin/mipsel-linux-g++
+CC			= /opt/bittboy-toolchain/bin/arm-miyoo-linux-musleabi-gcc
+CXX 		= /opt/bittboy-toolchain/bin/arm-miyoo-linux-musleabi-g++
+LD         	= /opt/bittboy-toolchain/bin/arm-miyoo-linux-musleabi-g++
 TARGET     = handy
 
-CFLAGS = -Ofast -fdata-sections -ffunction-sections -fno-common -flto -mips32 -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH -DDINGUX -DRS97 -DOSS_OUTPUT
+CFLAGS = -O2 -fdata-sections -ffunction-sections -fno-common -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH -DDINGUX -DRS97 -DPORTAUDIO
 CXXFLAGS = $(CFLAGS)
 LDFLAGS =
-LIBS = -lstdc++ -lSDL -lz -lpthread -lportaudio -Wl,--as-needed -Wl,--gc-sections -flto -s
+LIBS = -lstdc++ -lSDL -lasound -lz -lpthread -lportaudio -Wl,--as-needed -Wl,--gc-sections -flto -s
 
 INCS = -I./src -I./src/handy-libretro -I./src/sdlemu
 

@@ -16,7 +16,7 @@ CXX 		= /opt/rs97-toolchain/bin/mipsel-linux-g++
 LD         	= /opt/rs97-toolchain/bin/mipsel-linux-g++
 TARGET     = handy
 
-CFLAGS = -Ofast -fdata-sections -ffunction-sections -fno-common -flto -mips32 -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH -DDINGUX -DRS97 -DOSS_OUTPUT
+CFLAGS = -Ofast -fdata-sections -ffunction-sections -fno-common -mips32 -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH -DDINGUX -DOSS_OUTPUT
 CXXFLAGS = $(CFLAGS)
 LDFLAGS =
 LIBS = -lstdc++ -lSDL -lz -lpthread -lportaudio -Wl,--as-needed -Wl,--gc-sections -flto -s
