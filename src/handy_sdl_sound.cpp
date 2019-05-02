@@ -278,21 +278,6 @@ int handy_sdl_audio_init(void)
 		return 1;
 	}
 
-	/* Set period size to settings.aica.BufferSize frames. */
-	frames = 2048;
-	rc = snd_pcm_hw_params_set_period_size_near(handle, params, &frames, &dir);
-	if (rc < 0)
-	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
-		return 1;
-	}
-	frames *= 4;
-	rc = snd_pcm_hw_params_set_buffer_size_near(handle, params, &frames);
-	if (rc < 0)
-	{
-		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
-		return 1;
-	}
 
 	/* Write the parameters to the driver */
 	rc = snd_pcm_hw_params(handle, params);
@@ -367,7 +352,7 @@ void handy_sdl_sound_loop()
 {
 #if defined(PORTAUDIO) || defined(LIBAO) || defined(OSS_OUTPUT) || defined(ALSA_OUTPUT)
 	mpLynx->Update();
-	if(gAudioBufferPointer >= HANDY_AUDIO_BUFFER_SIZE/2 && gAudioEnabled)
+	//if(gAudioBufferPointer >= HANDY_AUDIO_BUFFER_SIZE/2 && gAudioEnabled)
 	{
 		uint32_t f = gAudioBufferPointer;
 		gAudioBufferPointer = 0;	
