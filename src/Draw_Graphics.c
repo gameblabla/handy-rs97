@@ -129,11 +129,15 @@ void handy_sdl_draw_graphics(void)
 			switch(gui_ImageScaling)
 			{
 				case 0:
-					bitmap_scale(0,Cut_Off_Y,
-					LynxWidth,LynxHeight,
-					LynxWidth,LynxHeight,
-					HandyBuffer->w, mainSurface->w-LynxWidth,
-					(uint16_t* __restrict__)HandyBuffer->pixels,(uint16_t* __restrict__)mainSurface->pixels+(mainSurface->w-(LynxWidth))/2+(mainSurface->h-(LynxHeight))/2*mainSurface->w);
+					dst2.x = 0;
+					dst2.y = Cut_Off_Y;
+					dst2.w = LynxWidth;
+					dst2.h = LynxHeight;
+					dst.x = (mainSurface->w-LynxWidth)/2;
+					dst.y = 0;
+					dst.w = LynxWidth;
+					dst.h = LynxHeight;
+					SDL_BlitSurface(HandyBuffer, &dst2, mainSurface, &dst);
 				break;
 				case 1:
 					bitmap_scale(0, Cut_Off_Y, LynxWidth, LynxHeight, mainSurface->w, mainSurface->h, LynxWidth, 0, HandyBuffer->pixels, mainSurface->pixels);
