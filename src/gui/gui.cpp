@@ -97,11 +97,18 @@ typedef struct {
 	MENUITEM *m; // array of items
 } MENU;
 
-const char* gui_ScaleNames[] = {"Prefer Aspect", "fullscreen", "Scanlines", "Scanlines/Full"};
+#ifdef RS90
+const char* gui_ScaleNames[] = {"Original", "Fullscreen", "Scanlines", "Scanlines/Full"};
+#else
+const char* gui_ScaleNames[] = {"Prefer Aspect", "Fullscreen", "Scanlines", "Scanlines/Full"};
+#endif
 const char* gui_YesNo[] = {"no", "yes"};
 
 MENUITEM gui_MainMenuItems[] = {
+	/* It's unusable on the RS-90, disable */
+	#ifndef RS90
 	{(const char *)"Load rom", NULL, NULL, NULL, &gui_FileBrowserRun},
+	#endif
 	{(const char *)"Config", NULL, NULL, NULL, &gui_ConfigMenuRun},
 	{(const char *)"Load state: ", &gui_LoadSlot, 9, NULL, &gui_LoadState},
 	{(const char *)"Save state: ", &gui_LoadSlot, 9, NULL, &gui_SaveState},
@@ -109,10 +116,14 @@ MENUITEM gui_MainMenuItems[] = {
 	{(const char *)"Exit", NULL, NULL, NULL, &handy_sdl_quit} // extern in handy_sdl_main.cpp
 };
 
+#ifdef RS90
+MENU gui_MainMenu = { 5, 0, (MENUITEM *)&gui_MainMenuItems };
+#else
 MENU gui_MainMenu = { 6, 0, (MENUITEM *)&gui_MainMenuItems };
+#endif
 
 MENUITEM gui_ConfigMenuItems[] = {
-	{(const char *)"Upscale  : ", &gui_ImageScaling, 3, (const char **)&gui_ScaleNames, NULL},
+	{(const char *)"Upscale  : ", &gui_ImageScaling, 1, (const char **)&gui_ScaleNames, NULL},
 	//{(char *)"Frameskip: ", &gui_Frameskip, 9, NULL, NULL},
 	//{(char *)"Show fps : ", &gui_Show_FPS, 1, (char **)&gui_YesNo, NULL},
 	{(const char *)"Swap A/B : ", &gui_SwapAB, 1, (const char **)&gui_YesNo, NULL}
@@ -611,6 +622,16 @@ void ShowPreview(MENU *menu)
 		
 		if (Game_Surface_Preview) 
 		{
+			#ifdef RS90
+			dst.x = 72;
+			dst.y = 16;
+			dst.w = 96;
+			dst.h = 64;
+			dst2.x = 0;
+			dst2.y = 0;
+			dst2.w = LynxWidth;
+			dst2.h = LynxHeight;
+			#else
 			dst.x = 80;
 			dst.y = 24;
 			dst.w = 160;
@@ -619,6 +640,7 @@ void ShowPreview(MENU *menu)
 			dst2.y = 0;
 			dst2.w = LynxWidth;
 			dst2.h = LynxHeight;
+			#endif
 			SDL_SoftStretch(Game_Surface_Preview, &dst2, menuSurface, &dst);
 		}
 		//for(int y = 0; y < 102; y++) memcpy((char *)menuSurface->pixels + (24 + y) * 320*2 + 80*2, prebuffer + y * 320, 320);
@@ -627,6 +649,16 @@ void ShowPreview(MENU *menu)
 	{
 		if (HandyBuffer) 
 		{
+			#ifdef RS90
+			dst.x = 72;
+			dst.y = 16;
+			dst.w = 96;
+			dst.h = 64;
+			dst2.x = 0;
+			dst2.y = 0;
+			dst2.w = LynxWidth;
+			dst2.h = LynxHeight;
+			#else
 			dst.x = 80;
 			dst.y = 24;
 			dst.w = 160;
@@ -635,6 +667,7 @@ void ShowPreview(MENU *menu)
 			dst2.y = 0;
 			dst2.w = LynxWidth;
 			dst2.h = LynxHeight;
+			#endif
 			SDL_SoftStretch(HandyBuffer, &dst2, menuSurface, &dst);
 		}
 	}
@@ -656,16 +689,26 @@ void ShowMenu(MENU *menu)
 		int fg_color;
 
 		if(menu->itemCur == i) fg_color = COLOR_ACTIVE_ITEM; else fg_color = COLOR_INACTIVE_ITEM;
+	#ifdef RS90
+		ShowMenuItem(56, (13 + i) * 8, mi, fg_color);
+	#else
 		ShowMenuItem(80, (18 + i) * 8, mi, fg_color);
+	#endif
 	}
 
 	// show preview screen
 	ShowPreview(menu);
 
 	// print info string
+	#ifdef RS90
+	print_string("Handy RS-97 libretro", COLOR_HELP_TEXT, COLOR_BG, 48, 2);
+	print_string("Port by gameblabla", COLOR_HELP_TEXT, COLOR_BG, 48, 88);
+	print_string("[B] = Return to game", COLOR_HELP_TEXT, COLOR_BG, 4, 158-8);
+	#else
 	print_string("Press B to return to the game", COLOR_HELP_TEXT, COLOR_BG, 56, 220);
 	print_string("Handy RS-97 libretro", COLOR_HELP_TEXT, COLOR_BG, 80, 2);
 	print_string("Port by gameblabla", COLOR_HELP_TEXT, COLOR_BG, 80, 12);
+	#endif
 }
 
 /*
@@ -760,7 +803,11 @@ void get_config_path()
 void gui_Init()
 {
 	get_config_path();
+	#ifdef RS90
+	menuSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, 240, 160, 16, 0, 0, 0, 0);
+	#else
 	menuSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
+	#endif
 }
 
 void gui_Run()
@@ -833,7 +880,11 @@ void gui_video_early_init()
 {
 	SDL_Init(SDL_INIT_AUDIO|SDL_INIT_VIDEO);
 	handy_sdl_video_early_setup(480, 272, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
+	#ifdef RS90
+	menuSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, 240, 160, 16, 0, 0, 0, 0);
+	#else
 	menuSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
+	#endif
 	SDL_ShowCursor(0);
 	SDL_EnableKeyRepeat(/*SDL_DEFAULT_REPEAT_DELAY*/ 150, /*SDL_DEFAULT_REPEAT_INTERVAL*/30);
 }
@@ -847,9 +898,15 @@ void gui_video_early_deinit()
 void gui_Flip()
 {
 	SDL_Rect dstrect;
-
-	dstrect.x = (mainSurface->w - 320) / 2;
-	dstrect.y = (mainSurface->h - 240) / 2;
-	SDL_BlitSurface(menuSurface, 0, mainSurface, &dstrect);
+	//dstrect.x = (mainSurface->w - 320) / 2;
+	//dstrect.y = (mainSurface->h - 240) / 2;
+	if (mainSurface->w == 320 || mainSurface->w == 240)
+	{
+		SDL_BlitSurface(menuSurface, NULL, mainSurface, NULL);
+	}
+	else
+	{
+		SDL_SoftStretch(menuSurface, NULL, mainSurface, NULL);
+	}
 	SDL_Flip(mainSurface);
 }

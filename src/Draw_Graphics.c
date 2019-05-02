@@ -27,10 +27,26 @@ void handy_sdl_draw_graphics(void)
 	SDL_Rect dst, dst2;
 	if(SDL_MUSTLOCK(mainSurface)) SDL_LockSurface(mainSurface);
 
+	/* Horizontal games */
 	if (mRotation == 0)
 	{
 			switch(mainSurface->w) 
 			{
+				case 240:
+					switch(gui_ImageScaling)
+					{
+						case 0:
+							bitmap_scale(0,Cut_Off_Y,
+							LynxWidth,LynxHeight,
+							LynxWidth,LynxHeight,
+							HandyBuffer->w, mainSurface->w-LynxWidth,
+							(uint16_t* __restrict__)HandyBuffer->pixels,(uint16_t* __restrict__)mainSurface->pixels+(mainSurface->w-(LynxWidth))/2+(mainSurface->h-(LynxHeight))/2*mainSurface->w);
+						break;
+						case 1:
+							bitmap_scale(0, Cut_Off_Y, LynxWidth, LynxHeight, mainSurface->w, mainSurface->h, LynxWidth, 0, HandyBuffer->pixels, mainSurface->pixels);
+						break;
+					}
+				break;
 				case 320:
 					switch(gui_ImageScaling)
 					{
@@ -74,37 +90,56 @@ void handy_sdl_draw_graphics(void)
 						break;
 					}
 				break;
-				case 400:
-					dst.x = 40;
-					if (gui_ImageScaling == 0) dst.y = ((mainSurface->h - (LYNX_DOUBLE_HEIGHT))/2);
-					else dst.y = 0;
-					dst.w = (LYNX_DOUBLE_WIDTH);
-					if (gui_ImageScaling == 0) dst.h = (LYNX_DOUBLE_HEIGHT);
-					else dst.h = mainSurface->h;
-					
-					dst2.x = 0;
-					dst2.y = 0;
-					dst2.w = LynxWidth;
-					dst2.h = LynxHeight;
-					SDL_SoftStretch(HandyBuffer, &dst2, mainSurface, &dst);
-				break;
-				case 480:
-					dst.x = 0;
-					dst.y = 0;
-					dst.w = mainSurface->w;
-					dst.h = mainSurface->h;
-					dst2.x = 0;
-					dst2.y = 0;
-					dst2.w = LynxWidth;
-					dst2.h = LynxHeight;
-					SDL_SoftStretch(HandyBuffer, &dst2, mainSurface, &dst);
+				default:
+					switch(gui_ImageScaling)
+					{
+						case 0:
+							dst.x = 0;
+							dst.h = ((mainSurface->w / LynxWidth) * LynxHeight);
+							dst.y = (mainSurface->h - dst.h) / 2;
+							dst.w = mainSurface->w;
+							dst2.x = 0;
+							dst2.y = 0;
+							dst2.w = LynxWidth;
+							dst2.h = LynxHeight;
+							SDL_SoftStretch(HandyBuffer, &dst2, mainSurface, &dst);
+						break;
+						default:
+							dst.x = 0;
+							dst.y = 0;
+							dst.w = mainSurface->w;
+							dst.h = mainSurface->h;
+							dst2.x = 0;
+							dst2.y = 0;
+							dst2.w = LynxWidth;
+							dst2.h = LynxHeight;
+							SDL_SoftStretch(HandyBuffer, &dst2, mainSurface, &dst);
+						break;
+					}
+
 				break;
 			}
 	}
+	/* Vertical mode games */
 	else
 	{
 		switch(mainSurface->w) 
 		{
+			case 240:
+			switch(gui_ImageScaling)
+			{
+				case 0:
+					bitmap_scale(0,Cut_Off_Y,
+					LynxWidth,LynxHeight,
+					LYNX_DOUBLE_WIDTH,mainSurface->h,
+					HandyBuffer->w, mainSurface->w-LYNX_DOUBLE_WIDTH,
+					(uint16_t* __restrict__)HandyBuffer->pixels,(uint16_t* __restrict__)mainSurface->pixels+(mainSurface->w-(LYNX_DOUBLE_WIDTH))/2+(mainSurface->h-(mainSurface->h))/2*mainSurface->w);
+				break;
+				case 1:
+					bitmap_scale(0, Cut_Off_Y, LynxWidth, LynxHeight, mainSurface->w, mainSurface->h, LynxWidth, 0, HandyBuffer->pixels, mainSurface->pixels);
+				break;
+			}
+			break;
 			case 320:
 			switch(gui_ImageScaling)
 			{
@@ -150,23 +185,35 @@ void handy_sdl_draw_graphics(void)
 			}
 			break;
 			default:
-				dst.y = 0;
-				dst.h = mainSurface->h;
-				if (gui_ImageScaling == 0)
+				switch(gui_ImageScaling)
 				{
-					dst.x = (mainSurface->w - (LYNX_DOUBLE_WIDTH))/2;
-					dst.w = (LYNX_DOUBLE_WIDTH);
+					case 0:
+						/* This often ends up being too small, double width */
+						dst.w = ((mainSurface->h / LynxHeight) * LynxWidth) * 2;
+						/* If it ends up being bigger than the screen width then don't double */
+						if (dst.w > mainSurface->w) dst.w = ((mainSurface->h / LynxHeight) * LynxWidth);
+						
+						dst.x = (mainSurface->w - dst.w)/2;
+						dst.y = 0;
+						dst.h = mainSurface->h;
+						dst2.x = 0;
+						dst2.y = Cut_Off_Y;
+						dst2.w = LynxWidth;
+						dst2.h = LynxHeight;
+						SDL_SoftStretch(HandyBuffer, &dst2, mainSurface, &dst);
+					break;
+					default:
+						dst.y = 0;
+						dst.h = mainSurface->h;
+						dst.x = 0;
+						dst.w = mainSurface->w;
+						dst2.x = 0;
+						dst2.y = Cut_Off_Y;
+						dst2.w = LynxWidth;
+						dst2.h = LynxHeight;
+						SDL_SoftStretch(HandyBuffer, &dst2, mainSurface, &dst);
+					break;
 				}
-				else
-				{
-					dst.x = 0;
-					dst.w = mainSurface->w;
-				}
-				dst2.x = 0;
-				dst2.y = Cut_Off_Y;
-				dst2.w = LynxWidth;
-				dst2.h = LynxHeight;
-				SDL_SoftStretch(HandyBuffer, &dst2, mainSurface, &dst);
 			break;
 		}
 	}

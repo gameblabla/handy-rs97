@@ -98,6 +98,12 @@ int handy_sdl_video_early_setup(int surfacewidth, int surfaceheight, int sdl_bpp
 	#ifdef RS97
 	surfacewidth = 320;
 	surfaceheight = 240;
+	#elif defined(RS90)
+	surfacewidth = 240;
+	surfaceheight = 160;
+	#elif defined(RETROSTONE)
+	surfacewidth = 0;
+	surfaceheight = 0;
 	#else
 	surfacewidth = 480;
 	surfaceheight = 272;
