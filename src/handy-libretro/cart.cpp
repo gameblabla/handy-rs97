@@ -310,7 +310,7 @@ CCart::CCart(UBYTE *gamedata,ULONG gamesize)
 	else
 		Invert = 0;
 	
-	printf("\Game nnCRC : 0%x\n", mycrc);
+	printf("\Game CRC : 0%x\n", mycrc);
 	
 	/* Some games don't have a proper header or have incorrect controls. */
 	
@@ -320,6 +320,7 @@ CCart::CCart(UBYTE *gamedata,ULONG gamesize)
 		case 0x0ec53a878:
 		/* Gauntlet , Rotate to the left */
 		case 0x08e0908e5:
+		case 0x0c291dd38:
 			mRotation = CART_ROTATE_LEFT;
 			Invert = 2;
 		break;
