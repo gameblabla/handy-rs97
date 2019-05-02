@@ -307,7 +307,7 @@ void handy_sdl_quit(void)
 	if (mainSurface) SDL_FreeSurface(mainSurface);
 
     // Close SDL Subsystems
-    SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK);
+    SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);
     SDL_Quit();
     exit(EXIT_SUCCESS);
 
