@@ -4010,7 +4010,7 @@ inline void CMikie::Update(void)
 
 inline void CMikie::UpdateSound(void)
 {
-#if (defined(PORTAUDIO) || defined(OSS_OUTPUT) || defined(LIBAO))
+#if (defined(PORTAUDIO) || defined(OSS_OUTPUT) || defined(LIBAO) || defined(ALSA_OUTPUT))
 	uint32_t cur_lsample = 0;
 	uint32_t cur_rsample = 0;
 	uint32_t x;

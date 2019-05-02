@@ -65,7 +65,7 @@
 #define HANDY_TIMER_FREQ						20
 #define HANDY_AUDIO_WAVESHAPER_TABLE_LENGTH		0x200000
 
-#if defined(PORTAUDIO) || defined(LIBAO) || defined(OSS_OUTPUT)
+#if defined(PORTAUDIO) || defined(LIBAO) || defined(OSS_OUTPUT) || defined(ALSA_OUTPUT)
 #define HANDY_AUDIO_SAMPLE_FREQ					48000
 #define HANDY_AUDIO_BUFFER_SIZE					2048
 #else
