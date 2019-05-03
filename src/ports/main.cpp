@@ -277,13 +277,13 @@ void handy_sdl_quit(void)
     emulation   = -1;
     
     Clean_Surfaces();
-	if (HandyBuffer) SDL_FreeSurface(HandyBuffer);
+	/*if (HandyBuffer) SDL_FreeSurface(HandyBuffer);
 	if (mainSurface) SDL_FreeSurface(mainSurface);
 
     // Close SDL Subsystems
     SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);
-    SDL_Quit();
-    exit(EXIT_SUCCESS);
+    SDL_Quit();*/
+    exit(0);
 
 }
 

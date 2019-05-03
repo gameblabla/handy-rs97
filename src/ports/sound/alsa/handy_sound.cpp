@@ -115,6 +115,21 @@ int handy_sdl_audio_init(void)
 		return 1;
 	}
 
+	frames = HANDY_AUDIO_BUFFER_SIZE;
+	rc = snd_pcm_hw_params_set_period_size_near(handle, params, &frames, &dir);
+	if (rc < 0)
+	{
+		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
+		return;
+	}
+	
+	frames *= 4;
+	rc = snd_pcm_hw_params_set_buffer_size_near(handle, params, &frames);
+	if (rc < 0)
+	{
+		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
+		return;
+	}
 
 	/* Write the parameters to the driver */
 	rc = snd_pcm_hw_params(handle, params);
