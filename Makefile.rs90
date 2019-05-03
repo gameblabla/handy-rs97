@@ -39,13 +39,17 @@ SRCDIR		+= ./src/ports/sound/libao
 endif
 
 ifeq ($(PROFILE), YES)
-CFLAGS 		+= -fprofile-generate=/home/retrofw/profile
+CFLAGS 		+= -fprofile-generate="/media/QEMU VVFAT"
 else ifeq ($(PROFILE), APPLY)
 CFLAGS		+= -fprofile-use -fbranch-probabilities
 endif
 
 CXXFLAGS	= $(CFLAGS)
-LDFLAGS     = -nodefaultlibs -lc -lstdc++ -lgcc -lgcc_s -lm -lSDL -lz -no-pie -Wl,--as-needed -Wl,--gc-sections -s -flto
+LDFLAGS     = -nodefaultlibs -lc -lstdc++ -lgcc -lm -lSDL -lz -no-pie -Wl,--as-needed -Wl,--gc-sections -s -flto
+
+ifeq ($(PROFILE), YES)
+LDFLAGS		+= -lgcov
+endif
 
 ifeq ($(SOUND_OUTPUT), portaudio)
 LDFLAGS		+= -lportaudio
