@@ -174,8 +174,9 @@ void Set_Rotation_Game()
     }
     
     /* Don't clear the RGB surface as it will make it crash. Perhaps SDL does it on its own ??? */
-    /* Also height needs to be 8 pixels bigger for vertical games as those will need cropping. */
-	HandyBuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, LynxWidth, 168, 16, 0, 0, 0, 0);
+    /* Also height needs to be 16 pixels bigger for vertical games as those will need cropping. */
+    /* 8 pixels will be cropped and 8 more pixels are needed to avoid overflows. */
+	HandyBuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, LynxWidth, 176, 16, 0, 0, 0, 0);
 }
 
 /*
@@ -335,11 +336,8 @@ int main(int argc, char *argv[])
     // As SDL is not initialized yet, gui_LoadFile calls gui_video_early_init()
     if (argc < 2) 
     {
-        if(gui_LoadFile(load_filename))  {
-            snprintf(romname, sizeof(romname), "%s", load_filename);
-        } else {
-            exit(EXIT_FAILURE);
-        }
+		printf("We need a ROM to load\n");
+		return 1;
     }
     else
     {
@@ -357,7 +355,7 @@ int main(int argc, char *argv[])
     printf("Initialising SDL...           ");
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0) {
         fprintf(stderr, "FAILED : Unable to init SDL: %s\n", SDL_GetError());
-        exit(EXIT_FAILURE);
+        return 1;
     }
     
 	if(SDL_NumJoysticks() > 0)
@@ -370,7 +368,8 @@ int main(int argc, char *argv[])
     // Initialise Handy/SDL video 
     if(!Handy_Init_Video())
     {
-        return 0;
+		SDL_Quit();
+        return 1;
     }
 
     // Initialise Handy/SDL audio
@@ -407,19 +406,13 @@ int main(int argc, char *argv[])
                     KeyMask = handy_sdl_on_key_up(handy_sdl_event.key, KeyMask);
                     break;
                 case SDL_KEYDOWN:
-                    if(handy_sdl_event.key.keysym.sym == SDLK_BACKSPACE) {
-                        SDL_FillRect(mainSurface,NULL,SDL_MapRGBA(mainSurface->format, 0, 0, 0, 255));
-                        SDL_Flip(mainSurface);
-                        SDL_FillRect(mainSurface,NULL,SDL_MapRGBA(mainSurface->format, 0, 0, 0, 255));
-                        SDL_Flip(mainSurface);
-                        break;
-                    }
-                    if(handy_sdl_event.key.keysym.sym == SDLK_ESCAPE || handy_sdl_event.key.keysym.sym == SDLK_END || handy_sdl_event.key.keysym.sym == SDLK_RCTRL) {
+					KeyMask = handy_sdl_on_key_down(handy_sdl_event.key, KeyMask);
+                    if (handy_sdl_event.key.keysym.sym == SDLK_ESCAPE || handy_sdl_event.key.keysym.sym == SDLK_END || handy_sdl_event.key.keysym.sym == SDLK_RCTRL) 
+                    {
                         gui_Run();
                         KeyMask = 0;
                         break;
                     }
-                    KeyMask = handy_sdl_on_key_down(handy_sdl_event.key, KeyMask);
                     break;
                 default:
                     KeyMask = 0;

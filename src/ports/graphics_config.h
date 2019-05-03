@@ -25,8 +25,6 @@
 	#define OUTPUT_HEIGHT 160
 	#define SDL_BPP 16
 	
-	#define NOROMLOADER
-	
 #elif defined(RETROSTONE)
 	/* Zero means auto-detect */
 	#define SDL_OUTPUT_WIDTH 0
