@@ -149,11 +149,11 @@ void _splitpath(const char* path, char* drv, char* dir, char* name, char* ext)
    
 	// First check for ZIP file
 	if(strcmp(gamefile,"")==0)
-   {
+	{
       // No file
       filesize=0;
       filememory=NULL;
-   }
+	}
 	else if(IsZip(gamefile))
 	{
 		// Try and find a file in the zip
@@ -214,14 +214,14 @@ void _splitpath(const char* path, char* drv, char* dir, char* name, char* ext)
 				{
 					// Allocate memory for the rom
 					filesize=info.uncompressed_size;
-					filememory=(UBYTE*) new UBYTE[filesize];
+					filememory = (UBYTE*)malloc(filesize);
 
 					// Read it into memory					
 					if(unzReadCurrentFile(fp,filememory,filesize)!=(int)info.uncompressed_size)
 					{
 						unzCloseCurrentFile(fp);
 						unzClose(fp);
-						delete filememory;
+						free(filememory);
 						// Throw a wobbly
 						CLynxException lynxerr;
 						lynxerr.Message() << "Handy Error: ZIP File load problems" ;
@@ -261,23 +261,25 @@ void _splitpath(const char* path, char* drv, char* dir, char* name, char* ext)
    {
       // Open the file and load the file
       FILE	*fp;
+      
+      fp = fopen(gamefile,"rb");
 
       // Open the cartridge file for reading
-      if((fp=fopen(gamefile,"rb"))==NULL)
+      if (!fp)
       {
          fprintf(stderr, "Invalid Cart.\n");
       }
 
       // How big is the file ??
       fseek(fp,0,SEEK_END);
-      filesize=ftell(fp);
+      filesize = ftell(fp);
       fseek(fp,0,SEEK_SET);
-      filememory=(UBYTE*) new UBYTE[filesize];
+      filememory = (UBYTE*)malloc(filesize);
 
       if(fread(filememory,sizeof(char),filesize,fp)!=filesize)
       {
          fprintf(stderr, "Invalid Cart (filesize).\n");
-         delete filememory;
+         free(filememory);
       }
 
       fclose(fp);
@@ -300,7 +302,7 @@ void _splitpath(const char* path, char* drv, char* dir, char* name, char* ext)
          fprintf(stderr, "Invalid Cart (type). but 128/256/512k size -> set to RAW and try to load raw rom image\n");
          //mFileType=HANDY_FILETYPE_RAW;
          mFileType=HANDY_FILETYPE_LNX;
-         //delete filememory;// WHY????? -> crash!
+         //free(filememory);// WHY????? -> crash!
       }else{
          fprintf(stderr, "Invalid Cart (type). -> set to RAW and try to load raw rom image\n");
       }
@@ -336,20 +338,20 @@ void _splitpath(const char* path, char* drv, char* dir, char* name, char* ext)
             if((fp=fopen(cartgo,"rb"))==NULL)
             {
                fprintf(stderr, "Invalid Cart.\n");
-               delete filememory;
+               free(filememory);
             }
 
             // How big is the file ??
             fseek(fp,0,SEEK_END);
             howardsize=ftell(fp);
             fseek(fp,0,SEEK_SET);
-            howardmemory=(UBYTE*) new UBYTE[filesize];
+            howardmemory=(UBYTE*) malloc(filesize);
 
             if(fread(howardmemory,sizeof(char),howardsize,fp)!=howardsize)
             {
-               delete howardmemory;
+               free(howardmemory);
                fprintf(stderr, "Invalid Cart.\n");
-               delete filememory;
+               free(filememory);
             }
 
             fclose(fp);
@@ -402,8 +404,10 @@ void _splitpath(const char* path, char* drv, char* dir, char* name, char* ext)
          fprintf(stderr, "Invalid Snapshot.\n");
       }
    }
-   if(filesize && filememory!=NULL) delete filememory;
-   if(howardsize && howardmemory!=NULL) delete howardmemory;
+   
+   if (filesize && filememory) free(filememory);
+   if (howardsize && howardmemory) free(howardmemory);
+   
    mEEPROM->SetEEPROMType(mCart->mEEPROMType);
 
    {
@@ -681,7 +685,7 @@ size_t	CSystem::MemoryContextSave(const char* tmpfilename, char *context)
 
    if(NULL == context)
    {
-      if (filememory) delete filememory;
+      if (filememory) free(filememory);
    }
 
    remove(tmpfilename);
@@ -834,7 +838,7 @@ bool CSystem::ContextLoad(const char *context)
          if(mCart->CRC32()!=checksum)
          {
             delete fp;
-            delete filememory;
+            free(filememory);
             fprintf(stderr, "[handy]LSS Snapshot CRC does not match the loaded cartridge image, aborting load.\n");
             return 0;
          }
@@ -892,7 +896,7 @@ bool CSystem::ContextLoad(const char *context)
    }
 
    delete fp;
-   delete filememory;
+   free(filememory);
 
    return status;
 }
