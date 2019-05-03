@@ -3,8 +3,6 @@
 mkdir -p ipkg/home/retrofw/emus/handy
 mkdir -p ipkg/home/retrofw/apps/gmenu2x/sections/emulators
 cp handy ipkg/home/retrofw/emus/handy/handy
-cp scanlines.bmp ipkg/home/retrofw/emus/handy/scanlines.bmp
-cp scanlines_90.bmp ipkg/home/retrofw/emus/handy/scanlines_90.bmp
 cp handy.png ipkg/home/retrofw/emus/handy/handy.png
 
 cd ipkg
