@@ -73,8 +73,8 @@
 #include <sys/types.h>
 
 /* SDL declarations */
-SDL_Surface        *HandyBuffer;             // Our Handy/SDL display buffer
-SDL_Surface        *mainSurface;             // Our Handy/SDL primary display
+SDL_Surface        *HandyBuffer, *mainSurface;
+extern SDL_Surface* menuSurface;
 SDL_Joystick *joystick;
 extern uint32_t Joystick_Down(uint32_t mask);
 
@@ -87,35 +87,10 @@ int                 mpBpp;                    // Lynx rendering bpp
 /* Handy/SDL declarations */
 int                 LynxWidth;                // Lynx SDL screen width
 int                 LynxHeight;              // Lynx SDL screen height
-int                LynxScale = 1;            // Factor to scale the display
-int                LynxLCD = 1;            // Emulate LCD Display
-int              LynxFormat;                // Lynx ROM format type
+int              LynxFormat = MIKIE_PIXEL_FORMAT_16BPP_565;                // Lynx ROM format type
 int              LynxRotate;                // Lynx ROM rotation type
 
 int                 emulation = 0;
-/*
-    Handy/SDL Rendering output
-
-    1 = SDL rendering
-    2 = OpenGL rendering
-    3 = YUV Overlay rendering
-
-    Default = 1 (SDL)
-*/
-int                rendertype = 1;
-
-/*
-    Handy/SDL Scaling/Scanline routine
-
-    1 = SDLEmu v1 (compatible with al SDL versions)
-    2 = SDLEmu v2 (faster but might break in future SDL versions or on certain platforms)
-    3 = Pierre Doucet v1 (compatible but possiby slow)
-
-    Default = 1 (SDLEmu v1)
-*/
-
-int                stype = 1;                // Scaling/Scanline routine.
-
 
 
 /*
@@ -173,7 +148,6 @@ inline int handy_sdl_update(void)
 
 
 extern SDL_Surface* HandyBuffer;
-extern int sdl_bpp_flag;
 extern int mRotation;
 /* Required for Rotate Right games like Gauntlet and Klax as they have an extra 8 pixels on the top */
 extern uint32_t Cut_Off_Y;
@@ -201,7 +175,7 @@ void Set_Rotation_Game()
     
     /* Don't clear the RGB surface as it will make it crash. Perhaps SDL does it on its own ??? */
     /* Also height needs to be 8 pixels bigger for vertical games as those will need cropping. */
-	HandyBuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, LynxWidth, 168, sdl_bpp_flag, 0x00000000, 0x00000000, 0x00000000, 0x00000000);
+	HandyBuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, LynxWidth, 168, 16, 0, 0, 0, 0);
 }
 
 /*
@@ -282,15 +256,16 @@ static void Cleanup_mess(void)
 {
     // Disable audio and set emulation to pause, then quit :)
     handy_audio_close();
-
-    Clean_Surfaces();
     
 	if (HandyBuffer) SDL_FreeSurface(HandyBuffer);
 	if (mainSurface) SDL_FreeSurface(mainSurface);
+	if (menuSurface) SDL_FreeSurface(menuSurface);
 
     // Close SDL Subsystems
-    SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);
+    SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK);
     SDL_Quit();
+    
+	if (mpLynx) delete mpLynx;
 }
 
 
@@ -329,7 +304,7 @@ void handy_sdl_core_init(char *romname)
 */
 void handy_sdl_core_reinit(char *romname)
 {
-    delete mpLynx;
+    if (mpLynx) delete mpLynx;
     handy_sdl_core_init(romname);
     handy_sdl_video_init(mpBpp);
 }
@@ -338,15 +313,8 @@ int Throttle = 1;  // Throttle to 60FPS
 
 int main(int argc, char *argv[])
 {
-    int       i;
-    int       frameskip  = 0;   // Frameskip
+    uint32_t       i;
     SDL_Event handy_sdl_event;
-    uint32_t    handy_sdl_start_time;
-    uint32_t    handy_sdl_this_time;
-    int       framecounter = 0; // FPS Counter
-    int       Autoskip = 0;     // Autoskip
-    int       Skipped = 0;
-    int       Fullscreen = 0;
     float fps_counter;
     int       bpp = 16;        // dingux has 16 hardcoded
     char load_filename[512];
@@ -387,12 +355,12 @@ int main(int argc, char *argv[])
 
     // Initalising SDL for Audio and Video support
     printf("Initialising SDL...           ");
-    if (SDL_Init(SDL_INIT_AUDIO|SDL_INIT_VIDEO|SDL_INIT_JOYSTICK) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0) {
         fprintf(stderr, "FAILED : Unable to init SDL: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
     
-	if(SDL_NumJoysticks()>0)
+	if(SDL_NumJoysticks() > 0)
 		joystick = SDL_JoystickOpen(0);
     printf("[DONE]\n");
 
@@ -400,7 +368,7 @@ int main(int argc, char *argv[])
     handy_sdl_core_init(romname);
 
     // Initialise Handy/SDL video 
-    if(!handy_sdl_video_setup(1, 0, 0, bpp, LynxScale, 0, 0))
+    if(!Handy_Init_Video())
     {
         return 0;
     }
@@ -413,14 +381,11 @@ int main(int argc, char *argv[])
     }
     printf("[DONE]\n");
 
-
     // Setup of Handy Core video
     handy_sdl_video_init(mpBpp);
 
     // Init gui (move to some other place later)
     gui_Init();
-
-    handy_sdl_start_time = SDL_GetTicks();
 
     printf("Starting Lynx Emulation...\n");
     while(!emulation)
@@ -468,9 +433,7 @@ int main(int argc, char *argv[])
 
         // Update TimerCount
         gTimerCount++;
-
-		uint32_t start;
-
+        
         while( handy_sdl_update() )
         {
             if(!gSystemHalt)
@@ -484,6 +447,6 @@ int main(int argc, char *argv[])
         }
     }
     
-    //Cleanup_mess();
+    Cleanup_mess();
     return 0;
 }

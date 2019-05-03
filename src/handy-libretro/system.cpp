@@ -402,8 +402,8 @@ void _splitpath(const char* path, char* drv, char* dir, char* name, char* ext)
          fprintf(stderr, "Invalid Snapshot.\n");
       }
    }
-   if(filesize) delete filememory;
-   if(howardsize) delete howardmemory;
+   if(filesize && filememory!=NULL) delete filememory;
+   if(howardsize && howardmemory!=NULL) delete howardmemory;
    mEEPROM->SetEEPROMType(mCart->mEEPROMType);
 
    {
@@ -681,7 +681,7 @@ size_t	CSystem::MemoryContextSave(const char* tmpfilename, char *context)
 
    if(NULL == context)
    {
-      delete filememory;
+      if (filememory) delete filememory;
    }
 
    remove(tmpfilename);
@@ -721,7 +721,7 @@ bool CSystem::MemoryContextLoad(const char *context, size_t size)
          lss_read(&checksum,sizeof(ULONG),1,fp);
          if(mCart->CRC32()!=checksum)
          {
-            delete fp;
+            if (fp) delete fp;
             fprintf(stderr, "[handy]LSS Snapshot CRC does not match the loaded cartridge image, aborting load.\n");
             return 0;
          }
@@ -778,7 +778,7 @@ bool CSystem::MemoryContextLoad(const char *context, size_t size)
       fprintf(stderr, "[handy]Not a recognised LSS file\n");
    }
 
-   delete fp;
+   if (fp) delete fp;
 
    return status;
 }

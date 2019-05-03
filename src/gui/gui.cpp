@@ -65,7 +65,6 @@ void gui_ConfigMenuRun();
 void gui_Reset();
 void gui_Init();
 void gui_video_early_init();
-void gui_video_early_deinit();
 void gui_Flip();
 void print_string(const char *s, u16 fg_color, u16 bg_color, int x, int y);
 void get_config_path();
@@ -98,15 +97,15 @@ typedef struct {
 } MENU;
 
 #ifdef RS90
-const char* gui_ScaleNames[] = {"Original", "Fullscreen", "Scanlines", "Scanlines/Full"};
+const char* gui_ScaleNames[] = {"Original", "Fullscreen"};
 #else
-const char* gui_ScaleNames[] = {"Prefer Aspect", "Fullscreen", "Scanlines", "Scanlines/Full"};
+const char* gui_ScaleNames[] = {"Prefer Aspect", "Fullscreen"};
 #endif
 const char* gui_YesNo[] = {"no", "yes"};
 
 MENUITEM gui_MainMenuItems[] = {
 	/* It's unusable on the RS-90, disable */
-	#ifndef RS90
+	#ifndef NOROMLOADER
 	{(const char *)"Load rom", NULL, NULL, NULL, &gui_FileBrowserRun},
 	#endif
 	{(const char *)"Config", NULL, NULL, NULL, &gui_ConfigMenuRun},
@@ -116,7 +115,7 @@ MENUITEM gui_MainMenuItems[] = {
 	{(const char *)"Exit", NULL, NULL, NULL, &handy_sdl_quit} // extern in handy_sdl_main.cpp
 };
 
-#ifdef RS90
+#ifdef NOROMLOADER
 MENU gui_MainMenu = { 5, 0, (MENUITEM *)&gui_MainMenuItems };
 #else
 MENU gui_MainMenu = { 6, 0, (MENUITEM *)&gui_MainMenuItems };
@@ -124,8 +123,6 @@ MENU gui_MainMenu = { 6, 0, (MENUITEM *)&gui_MainMenuItems };
 
 MENUITEM gui_ConfigMenuItems[] = {
 	{(const char *)"Upscale  : ", &gui_ImageScaling, 1, (const char **)&gui_ScaleNames, NULL},
-	//{(char *)"Frameskip: ", &gui_Frameskip, 9, NULL, NULL},
-	//{(char *)"Show fps : ", &gui_Show_FPS, 1, (char **)&gui_YesNo, NULL},
 	{(const char *)"Swap A/B : ", &gui_SwapAB, 1, (const char **)&gui_YesNo, NULL}
 };
 
@@ -574,13 +571,7 @@ int gui_LoadFile(char *romname)
 	// get current working dir before it's modified by load_file
 	get_config_path();
 
-	// do early initialize of SDL
-	gui_video_early_init();
-
 	if(load_file(file_ext, romname) != -1) result = 1;
-
-	// deinit to be fine
-	gui_video_early_deinit();
 
 	return result;
 }
@@ -701,7 +692,7 @@ void ShowMenu(MENU *menu)
 
 	// print info string
 	#ifdef RS90
-	print_string("Handy RS-97 libretro", COLOR_HELP_TEXT, COLOR_BG, 48, 2);
+	print_string("Handy : " __DATE__ " build", COLOR_HELP_TEXT, COLOR_BG, 20, 2);
 	print_string("Port by gameblabla", COLOR_HELP_TEXT, COLOR_BG, 48, 88);
 	print_string("[B] = Return to game", COLOR_HELP_TEXT, COLOR_BG, 4, 158-8);
 	#else
@@ -806,11 +797,6 @@ void get_config_path()
 void gui_Init()
 {
 	get_config_path();
-	#ifdef RS90
-	menuSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, 240, 160, 16, 0, 0, 0, 0);
-	#else
-	menuSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
-	#endif
 }
 
 void gui_Run()
@@ -848,57 +834,6 @@ void gui_Reset()
 {
 	mpLynx->Reset();
 	done = TRUE; // mark to exit
-}
-
-Uint64 ticks_needed_total = 0;
-Uint64 last_screen_timestamp = 0;
-Uint32 frames = 0;
-float us_needed = 0.0;
-
-void gui_CountFPS()
-{
-	Uint64 new_ticks, time_delta;
-
-	new_ticks = SDL_GetTicks() * 1000.0;
-	time_delta = new_ticks - last_screen_timestamp;
-	last_screen_timestamp = new_ticks;
-	ticks_needed_total += time_delta;
-	frames++;
-	if(frames == 60) {
-		us_needed = (float)ticks_needed_total / 60.0;
-		ticks_needed_total = 0;
-		frames = 0;
-	}
-}
-
-void gui_ShowFPS()
-{
-	if(gui_Show_FPS) {
-		static char buffer[64];
-		int tmp = (int)(10000000.0 / us_needed);
-
-		sprintf(buffer, "fps: %i.%i", tmp / 10, tmp % 10);
-		ShowStringEx(8, 8, buffer); // writes to mainSurface
-	}
-}
-
-void gui_video_early_init()
-{
-	SDL_Init(SDL_INIT_AUDIO|SDL_INIT_VIDEO);
-	handy_sdl_video_early_setup(480, 272, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
-	#ifdef RS90
-	menuSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, 240, 160, 16, 0, 0, 0, 0);
-	#else
-	menuSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, 320, 240, 16, 0, 0, 0, 0);
-	#endif
-	SDL_ShowCursor(0);
-	SDL_EnableKeyRepeat(/*SDL_DEFAULT_REPEAT_DELAY*/ 150, /*SDL_DEFAULT_REPEAT_INTERVAL*/30);
-}
-
-void gui_video_early_deinit()
-{
-	if (mainSurface != NULL) SDL_FreeSurface(mainSurface);
-	if (menuSurface != NULL) SDL_FreeSurface(menuSurface);
 }
 
 void gui_Flip()

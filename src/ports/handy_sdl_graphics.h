@@ -64,8 +64,6 @@
 #include <SDL/SDL_timer.h>
 #include "graphics_config.h"
 
-extern void Clean_Surfaces();
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -73,6 +71,8 @@ extern  void    handy_sdl_draw_graphics(void);
 #ifdef __cplusplus
 }
 #endif
+
+extern int Handy_Init_Video();
 
 inline	void    handy_sdl_scale(void);
 inline  void    handy_sdl_draw_filter(int filtertype, SDL_Surface *src, SDL_Surface *dst, Uint8 *delta);
@@ -82,5 +82,4 @@ inline  void    handy_sdl_draw_filter(int filtertype, SDL_Surface *src, SDL_Surf
 		uint8_t  *handy_sdl_display_callback(ULONG objref);
 		void 	handy_sdl_render_buffer(void);
 		void    handy_sdl_video_close(void);
-		int		handy_sdl_video_early_setup(int surfacewidth, int surfaceheight, int sdl_bpp_flag, int videoflags);
 #endif

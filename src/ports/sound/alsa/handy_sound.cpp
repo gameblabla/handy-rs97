@@ -68,6 +68,8 @@ int handy_audio_init(void)
 		return 1;
 	}
 	
+	rc = snd_config_update_free_global();
+	
 	snd_pcm_nonblock(handle, 0);
 	
 	/* Allocate a hardware parameters object. */
@@ -120,7 +122,7 @@ int handy_audio_init(void)
 	if (rc < 0)
 	{
 		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
-		return;
+		return 1;
 	}
 	
 	frames *= 4;
@@ -128,7 +130,7 @@ int handy_audio_init(void)
 	if (rc < 0)
 	{
 		fprintf(stderr, "Error:snd_pcm_hw_params_set_buffer_size_near %s\n", snd_strerror(rc));
-		return;
+		return 1;
 	}
 
 	/* Write the parameters to the driver */

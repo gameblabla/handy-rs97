@@ -10,7 +10,7 @@
 #include "sdlemu/sdlemu_filter.h"
 #include "gui/gui.h"
 
-extern SDL_Surface *Scanlines_surface[3], *mainSurface, *HandyBuffer;
+extern SDL_Surface *mainSurface, *HandyBuffer;
 extern int mRotation, LynxWidth, LynxHeight;
 extern int gui_ImageScaling;
 uint32_t Cut_Off_Y = 0;

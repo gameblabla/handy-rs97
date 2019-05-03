@@ -68,160 +68,9 @@
 #include "sdlemu/sdlemu_filter.h"
 #include "gui/gui.h"
 
-SDL_Surface *Scanlines_surface[3];
 extern SDL_Joystick* joystick;
-int	sdl_bpp_flag;
+extern SDL_Surface* menuSurface;
 
-void Clean_Surfaces()
-{
-	uint32_t i;
-	
-	for(i=0;i<3;i++)
-	{
-		if (Scanlines_surface[i])
-		{
-			SDL_FreeSurface(Scanlines_surface[i]);
-			Scanlines_surface[i] = NULL;
-		}
-	}	
-}
-
-/*
-    This is called also from gui when initializing for rom browser
-*/
-int handy_sdl_video_early_setup(int surfacewidth, int surfaceheight, int sdl_bpp_flag, int videoflags)
-{
-	surfacewidth = SDL_OUTPUT_WIDTH;
-	surfaceheight = SDL_OUTPUT_HEIGHT;
-	mainSurface = SDL_SetVideoMode(surfacewidth, surfaceheight, 16, videoflags);
-	
-    if (mainSurface == NULL)
-    {
-        printf("Could not create primary SDL surface: %s\n", SDL_GetError());
-        return 0;
-    }
-    return 1;
-}
-
-/*
-    Name                :     handy_sdl_video_setup
-    Parameters          :     rendertype ( 1 = SDL, 2 = OpenGL, 3 = YUV )
-                            fsaa ( 0 = off, 1 = on ) -> OpenGL specific
-                            fullscreen ( 0 = off, 1 = on )
-    Function            :   Initialisation of the video using the SDL libary.
-
-    Uses                :   N/A
-
-    Information            :    This is our setup function for getting our desired
-                            video setup.
-*/
-int handy_sdl_video_setup(int rendertype, int fsaa, int fullscreen, int bpp, int scale, int accel, int sync)
-{
-    const    SDL_VideoInfo     *info;
-	uint32_t             videoflags;
-	int              value;
-	int                 surfacewidth;
-	int                 surfaceheight;
-	SDL_Surface* tmp;
-	extern void Set_Rotation_Game();
-
-    info = SDL_GetVideoInfo();
-
-    // Let us check if SDL could get information about the videodriver.
-    if (!info)
-    {
-        printf("ERROR: SDL is unable to get the video info: %s\n", SDL_GetError());
-        return false;
-    }
-
-    if( bpp != 0 )
-    {
-            sdl_bpp_flag = bpp;
-    }
-    else
-    {
-            switch(info->vfmt->BitsPerPixel)
-            {
-                case 8:
-                    sdl_bpp_flag = 8;
-                    break;
-                case 16:
-                    sdl_bpp_flag = 16;
-                    break;
-                case 24:
-                    sdl_bpp_flag = 24;
-                    break;
-                case 32:
-                    sdl_bpp_flag = 32;
-                    break;
-                default:
-                    sdl_bpp_flag = 8;  // Default : 8bpp
-                    break;
-            }
-    }
-
-    mpBpp = sdl_bpp_flag;
-
-    printf("\nSDL Rendering : ");
-    videoflags = SDL_HWSURFACE;
-
-    printf("SDL Rendering : %dBPP\n", sdl_bpp_flag);
-
-    // setup SDL video mode
-    handy_sdl_video_early_setup(surfacewidth, surfaceheight, sdl_bpp_flag, videoflags);
-
-    // Setup the Handy Graphics Buffer.
-    //
-    // All the rendering is done in the graphics buffer and is then
-    // blitted to the mainSurface and thus to the screen.
-	HandyBuffer = SDL_CreateRGBSurface(SDL_SWSURFACE, LynxWidth, 168, sdl_bpp_flag, 0x00000000, 0x00000000, 0x00000000, 0x00000000);
-	
-    /* Scanline specific code - Gameblabla */
-    if (!Scanlines_surface[0])
-    {
-		tmp = SDL_LoadBMP("scanlines.bmp");
-		if (tmp)
-		{
-			SDL_SetColorKey(tmp, (SDL_SRCCOLORKEY | SDL_RLEACCEL), SDL_MapRGB(tmp->format, 255, 0, 255));
-			Scanlines_surface[0] = SDL_DisplayFormat(tmp);
-			SDL_FreeSurface(tmp);
-			SDL_SetAlpha(Scanlines_surface[0], SDL_SRCALPHA, 128);
-		}
-	}
-	
-	if (!Scanlines_surface[1])
-	{
-		tmp = SDL_LoadBMP("scanlines_90.bmp");
-		if (tmp)
-		{
-			SDL_SetColorKey(tmp, (SDL_SRCCOLORKEY | SDL_RLEACCEL), SDL_MapRGB(tmp->format, 255, 0, 255));
-			Scanlines_surface[1] = SDL_DisplayFormat(tmp);
-			SDL_FreeSurface(tmp);
-			SDL_SetAlpha(Scanlines_surface[1], SDL_SRCALPHA, 128);
-		}
-	}
-    
-    if (!Scanlines_surface[2])
-    {
-		Scanlines_surface[2] = SDL_CreateRGBSurface(SDL_SWSURFACE, 320 , 320 , sdl_bpp_flag, 0x00000000, 0x00000000, 0x00000000, 0x00000000);
-		SDL_FillRect(Scanlines_surface[2], NULL, SDL_MapRGB(Scanlines_surface[2]->format, 255, 255, 255));
-		SDL_SetAlpha(Scanlines_surface[2], SDL_SRCALPHA, 128);
-	}
-	
-    if (HandyBuffer == NULL)
-    {
-        printf("Could not create secondary SDL surface: %s\n", SDL_GetError());
-        return 0;
-    }
-
-    /* Setting Window Caption */
-    SDL_WM_SetCaption( "Handy/SDL", "HANDY");
-    SDL_EnableKeyRepeat( 0, 0); // Best options to use
-    SDL_EventState( SDL_MOUSEMOTION, SDL_IGNORE); // Ignoring mouse stuff.
-    SDL_ShowCursor( 0 ); // Removing mouse from window. Very handy in fullscreen mode :)
-    
-    return 1;
-}
 
 /*
     Name                :     handy_sdl_video_init
@@ -269,6 +118,36 @@ void handy_sdl_video_init(int bpp)
     printf("[DONE]\n");
 }
 
+
+/*
+    This is called also from gui when initializing for rom browser
+*/
+int Handy_Init_Video()
+{
+	mainSurface = SDL_SetVideoMode(SDL_OUTPUT_WIDTH, SDL_OUTPUT_HEIGHT, 16, SDL_HWSURFACE);
+	
+    if (mainSurface == NULL)
+    {
+        printf("Could not create primary SDL surface: %s\n", SDL_GetError());
+        return 0;
+        
+    }
+    
+	menuSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, MENU_OUTPUT_WIDTH, MENU_OUTPUT_HEIGHT, SDL_BPP, 0, 0, 0, 0);
+    if (menuSurface == NULL)
+    {
+        printf("Could not create primary SDL surface: %s\n", SDL_GetError());
+        return 0;
+    }
+    
+    SDL_EnableKeyRepeat( 0, 0); // Best options to use
+    SDL_ShowCursor( 0 ); // Removing mouse from window. Very handy in fullscreen mode :)
+	
+	handy_sdl_video_init(SDL_BPP);
+
+    return 1;
+}
+
 /*
     Name                :     handy_sdl_display_callback
     Parameters          :     N/A
@@ -291,8 +170,6 @@ uint8_t *handy_sdl_display_callback(ULONG objref)
     // Now to blit the contents of gfxBuffer to our main SDL surface.
     handy_sdl_draw_graphics();
     
-    // show fps if needed
-    gui_ShowFPS();
     SDL_Flip( mainSurface );
     
     return (uint8_t *)mpLynxBuffer;
