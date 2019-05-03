@@ -33,14 +33,14 @@
 
 PaStream *apu_stream;
 
-int handy_sdl_audio_init(void)
+int handy_audio_init(void)
 {
 	int32_t err;
     /* If we don't want sound, return 0 */
     if(gAudioEnabled == FALSE) return 0;
 
 #ifdef HANDY_SDL_DEBUG
-    printf("handy_sdl_audio_init - DEBUG\n");
+    printf("handy_audio_init - DEBUG\n");
 #endif
 
 	err = Pa_Initialize();
@@ -63,7 +63,7 @@ int handy_sdl_audio_init(void)
     return 1;
 }
 
-void handy_sdl_close()
+void handy_audio_close()
 {
 	int32_t err;
 	if (apu_stream)
@@ -73,7 +73,7 @@ void handy_sdl_close()
 	}
 }
 
-void handy_sdl_sound_loop()
+void handy_audio_loop()
 {
 	mpLynx->Update();
 	if (gAudioBufferPointer >= HANDY_AUDIO_BUFFER_SIZE/2 && gAudioEnabled)

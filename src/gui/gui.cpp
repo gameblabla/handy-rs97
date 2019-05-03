@@ -730,7 +730,10 @@ void gui_MainMenuRun(MENU *menu)
 			if(gui_event.type == SDL_KEYDOWN) {
 				// DINGOO A - apply parameter or enter submenu
 				//if(gui_event.key.keysym.sym == SDLK_RETURN) if(mi->itemOnA != NULL) (*mi->itemOnA)();
-				if(gui_event.key.keysym.sym == SDLK_LCTRL) if(mi->itemOnA != NULL) (*mi->itemOnA)();
+				if(gui_event.key.keysym.sym == SDLK_LCTRL)
+				{
+					if(mi->itemOnA != NULL) (*mi->itemOnA)();
+				}
 				// DINGOO B - exit or back to previous menu
 				//if(gui_event.key.keysym.sym == SDLK_ESCAPE) return;
 				if(gui_event.key.keysym.sym == SDLK_LALT) return;
@@ -818,14 +821,17 @@ void gui_Run()
 	SDL_EnableKeyRepeat(/*SDL_DEFAULT_REPEAT_DELAY*/ 150, /*SDL_DEFAULT_REPEAT_INTERVAL*/30);
 	gui_ClearScreen();
 	gui_MainMenuRun(&gui_MainMenu);
-	if(gui_SwapAB == 0) {
-    BT_A = SDLK_LCTRL;
-    BT_B = SDLK_LALT;
+	if (gui_SwapAB == 0) 
+	{
+		BT_A = SDLK_LCTRL;
+		BT_B = SDLK_LALT;
 		//BT_A = SDLK_p;
 		//BT_B = SDLK_o;
-	} else {
-    BT_A = SDLK_LALT;
-    BT_B = SDLK_LCTRL;
+	}
+	else 
+	{
+		BT_A = SDLK_LALT;
+		BT_B = SDLK_LCTRL;
 		//BT_A = SDLK_o;
 		//BT_B = SDLK_p;
 	}

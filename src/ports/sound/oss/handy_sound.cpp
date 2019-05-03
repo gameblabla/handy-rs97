@@ -36,7 +36,7 @@
 
 static int32_t oss_audio_fd = -1;
 
-int handy_sdl_audio_init(void)
+int handy_audio_init(void)
 {
     /* If we don't want sound, return 0 */
     if(gAudioEnabled == FALSE) return 0;
@@ -63,7 +63,7 @@ int handy_sdl_audio_init(void)
     return 1;
 }
 
-void handy_sdl_close()
+void handy_audio_close()
 {
 	if (oss_audio_fd >= 0)
 	{
@@ -71,7 +71,7 @@ void handy_sdl_close()
 	}
 }
 
-void handy_sdl_sound_loop()
+void handy_audio_loop()
 {
 	mpLynx->Update();
 	if (gAudioBufferPointer >= HANDY_AUDIO_BUFFER_SIZE/2 && gAudioEnabled)

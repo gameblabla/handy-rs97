@@ -60,8 +60,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-int handy_sdl_audio_init(void);
-void handy_sdl_sound_loop();
-void handy_sdl_close();
+int handy_audio_init(void);
+void handy_audio_loop();
+void handy_audio_close();
 
 #endif

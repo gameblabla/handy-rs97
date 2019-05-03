@@ -270,22 +270,29 @@ void handy_sdl_rom_info(void)
             break;
     }
 }
+
 void handy_sdl_quit(void)
 {
-    // Disable audio and set emulation to pause, then quit :)
-    handy_sdl_close();
+	extern int done;
     emulation   = -1;
-    
+    done = 1;
+}
+
+static void Cleanup_mess(void)
+{
+    // Disable audio and set emulation to pause, then quit :)
+    handy_audio_close();
+
     Clean_Surfaces();
-	/*if (HandyBuffer) SDL_FreeSurface(HandyBuffer);
+    
+	if (HandyBuffer) SDL_FreeSurface(HandyBuffer);
 	if (mainSurface) SDL_FreeSurface(mainSurface);
 
     // Close SDL Subsystems
     SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);
-    SDL_Quit();*/
-    exit(0);
-
+    SDL_Quit();
 }
+
 
 char rom_name_with_no_ext[128]; // rom name with no extension, used for savestates
 
@@ -358,7 +365,8 @@ int main(int argc, char *argv[])
 
     // If no argument given - call filebrowser
     // As SDL is not initialized yet, gui_LoadFile calls gui_video_early_init()
-    if (argc < 2) {
+    if (argc < 2) 
+    {
         if(gui_LoadFile(load_filename))  {
             snprintf(romname, sizeof(romname), "%s", load_filename);
         } else {
@@ -399,7 +407,7 @@ int main(int argc, char *argv[])
 
     // Initialise Handy/SDL audio
     printf("\nInitialising SDL Audio...     ");
-    if(handy_sdl_audio_init())
+    if(handy_audio_init())
     {
         gAudioEnabled = TRUE;
     }
@@ -467,7 +475,7 @@ int main(int argc, char *argv[])
         {
             if(!gSystemHalt)
             {
-				handy_sdl_sound_loop();
+				handy_audio_loop();
             }
             else
             {
@@ -475,6 +483,7 @@ int main(int argc, char *argv[])
             }
         }
     }
-
+    
+    //Cleanup_mess();
     return 0;
 }
