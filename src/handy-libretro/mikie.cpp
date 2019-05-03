@@ -4010,7 +4010,6 @@ inline void CMikie::Update(void)
 
 inline void CMikie::UpdateSound(void)
 {
-#if (defined(PORTAUDIO) || defined(OSS_OUTPUT) || defined(LIBAO) || defined(ALSA_OUTPUT))
 	uint32_t cur_lsample = 0;
 	uint32_t cur_rsample = 0;
 	uint32_t x;
@@ -4063,49 +4062,4 @@ inline void CMikie::UpdateSound(void)
 
 		gAudioBufferPointer%=HANDY_AUDIO_BUFFER_SIZE;
 	}
-#else
-	static SLONG sample=0;
-	ULONG mix=0;
-
-	// Mix the sample
-	sample=0;
-	{sample+=mAUDIO_OUTPUT[0]; mix++;}
-	{sample+=mAUDIO_OUTPUT[1]; mix++;}
-	{sample+=mAUDIO_OUTPUT[2]; mix++;}
-	{sample+=mAUDIO_OUTPUT[3]; mix++;}
-	if(mix)
-	{
-		sample+=128*mix; // Correct for sign
-		sample/=mix;	// Keep the audio volume at max
-	}
-	else
-	{
-		sample=128;
-	}
-	
-	/* Required for Signed 8-bit sound, not perfect though... 
-	 * Remove the following lines for unsigned sound, making it closer to 
-	 * real hardware.
-	 * */
-	sample /= 2;
-	if (sample < 1) sample = 0;
-	else if (sample > 127) sample = 127;
-	       
-	for(;gAudioLastUpdateCycle+HANDY_AUDIO_SAMPLE_PERIOD<gSystemCycleCount;gAudioLastUpdateCycle+=HANDY_AUDIO_SAMPLE_PERIOD)
-	{
-		// Output audio sample
-		/* Set the int8_t to uint8_t for unsigned sound */
-		gAudioBuffer[gAudioBufferPointer++]=(int8_t)sample;
-
-		// Check buffer overflow condition, stick at the endpoint
-		// teh audio output system will reset the input pointer
-		// when it reads out the data.
-
-		// We should NEVER overflow, this buffer holds 0.25 seconds
-		// of data if this happens the the multimedia system above
-		// has failed so the corruption of the buffer contents wont matter
-
-		gAudioBufferPointer%=HANDY_AUDIO_BUFFER_SIZE;
-	}
-#endif
 }

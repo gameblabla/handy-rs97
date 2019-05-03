@@ -25,15 +25,15 @@
 //                             Copyright (c) 2005                           //
 //                                SDLemu Team                               //
 //                                                                          //
-//                          Based upon Handy v0.90 WIN32                    // 
+//                          Based upon Handy v0.90 WIN32                    //
 //                            Copyright (c) 1996,1997                       //
 //                                  K. Wilkins                              //
 //////////////////////////////////////////////////////////////////////////////
-// handy_sdl_sound.h                                                         //
+// handy_sdl_graphics.h                                                     //
 //////////////////////////////////////////////////////////////////////////////
 //                                                                          //
-// This is the Handy/SDL sound header file. It manages the sound functions  //
-// for emulating the Atari Lynx emulator using the SDL Library.             //
+// This is the Handy/SDL graphics header file. It manages the graphics      //
+// functions for emulating the Atari Lynx emulator using the SDL Library.   //
 //                                                                          //
 //    N. Wagenaar                                                           //
 // December 2005                                                            //
@@ -53,8 +53,8 @@
 //  closed source version.                                                  //
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef __HANDY_SDL_SOUND_H__
-#define __HANDY_SDL_SOUND_H__
+#ifndef __HANDY_SDL_GRAPHICS_H__
+#define __HANDY_SDL_GRAPHICS_H__
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,12 +62,25 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_main.h>
 #include <SDL/SDL_timer.h>
- 
-//#include "handy_sdl_main.h"
+#include "graphics_config.h"
 
-int handy_sdl_audio_init(void);
-void handy_sdl_audio_callback(void *userdata, Uint8 *stream, int len);
-void handy_sdl_sound_loop();
-void handy_sdl_close();
+extern void Clean_Surfaces();
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern  void    handy_sdl_draw_graphics(void);
+#ifdef __cplusplus
+}
+#endif
+
+inline	void    handy_sdl_scale(void);
+inline  void    handy_sdl_draw_filter(int filtertype, SDL_Surface *src, SDL_Surface *dst, Uint8 *delta);
+		int 	handy_sdl_video_setup(int rendertype, int fsaa, int fullscreen, int bpp, int scale, int accel, int sysnc);
+		void 	handy_sdl_video_init(int bpp);
+		int 	handy_sdl_video_setup_sdl(const SDL_VideoInfo *info);
+		uint8_t  *handy_sdl_display_callback(ULONG objref);
+		void 	handy_sdl_render_buffer(void);
+		void    handy_sdl_video_close(void);
+		int		handy_sdl_video_early_setup(int surfacewidth, int surfaceheight, int sdl_bpp_flag, int videoflags);
 #endif

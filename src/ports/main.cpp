@@ -66,11 +66,8 @@
 #include "handy_sdl_main.h"
 #include "handy_sdl_graphics.h"
 #include "handy_sdl_handling.h"
-#include "handy_sdl_sound.h"
-#include "handy_sdl_usage.h"
-#ifdef DINGUX
+#include "handy_sound.h"
 #include "gui/gui.h"
-#endif
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -96,7 +93,6 @@ int              LynxFormat;                // Lynx ROM format type
 int              LynxRotate;                // Lynx ROM rotation type
 
 int                 emulation = 0;
-Uint8          *delta;
 /*
     Handy/SDL Rendering output
 
@@ -137,7 +133,7 @@ inline int handy_sdl_update(void)
 {
         // Throttling code
         //
-        if(gSystemCycleCount>gThrottleNextCycleCheckpoint)
+        if(gSystemCycleCount > gThrottleNextCycleCheckpoint)
         {
             static int limiter=0;
             static int flipflop=0;
@@ -152,31 +148,9 @@ inline int handy_sdl_update(void)
 
             if(gThrottleLastTimerCount==gTimerCount)
             {
-                // All we know is that we got here earlier than expected as the
-                // counter has not yet rolled over
-                if(limiter<0) limiter=0; else limiter++;
-                if(limiter>40 && mFrameSkip>0)
-                {
-                    mFrameSkip--;
-                    limiter=0;
-                }
-                flipflop=1;
                 return 0;
             }
-
-            // Frame Skip adjustment
-            if(!flipflop)
-            {
-                if(limiter>0) limiter=0; else limiter--;
-                if(limiter<-7 && mFrameSkip<10)
-                {
-                    mFrameSkip++;
-                    limiter=0;
-                }
-            }
-
-            flipflop=0;
-
+            
             //Set the next control point
             gThrottleNextCycleCheckpoint+=nextstep;
 
@@ -353,8 +327,6 @@ void handy_sdl_core_reinit(char *romname)
     handy_sdl_video_init(mpBpp);
 }
 
-#undef main // necessary for win32 compile
-
 int Throttle = 1;  // Throttle to 60FPS
 
 int main(int argc, char *argv[])
@@ -369,16 +341,7 @@ int main(int argc, char *argv[])
     int       Skipped = 0;
     int       Fullscreen = 0;
     float fps_counter;
-#ifdef DINGUX
     int       bpp = 16;        // dingux has 16 hardcoded
-#else
-    int       bpp = 0;         // BPP -> 8,16 or 32. 0 = autodetect (default)
-    int       fsaa = 0;        // OpenGL FSAA (default off)
-    int       accel = 1;       // OpenGL Hardware accel (default on)
-    int       sync  = 0;       // OpenGL VSYNC (default off)
-    int       overlay = 1;     // YUV Overlay format
-    char      overlaytype[4];  // Overlay Format
-#endif
     char load_filename[512];
     char romname[512];
     
@@ -396,17 +359,11 @@ int main(int argc, char *argv[])
     // If no argument given - call filebrowser
     // As SDL is not initialized yet, gui_LoadFile calls gui_video_early_init()
     if (argc < 2) {
-#ifdef DINGUX
         if(gui_LoadFile(load_filename))  {
             snprintf(romname, sizeof(romname), "%s", load_filename);
         } else {
-            handy_sdl_usage();
             exit(EXIT_FAILURE);
         }
-#else
-        handy_sdl_usage();
-        exit(EXIT_FAILURE);
-#endif
     }
     else
     {
@@ -415,117 +372,8 @@ int main(int argc, char *argv[])
 
     for ( i=0; (i < argc || argv[i] != NULL ); i++ )
     {
-        if (!strcmp(argv[i], "-throttle"))     Throttle = 1;
-        if (!strcmp(argv[i], "-nothrottle"))     Throttle = 0;
-#ifndef DINGUX
-        if (!strcmp(argv[i], "-autoskip"))     Autoskip = 1;
-        if (!strcmp(argv[i], "-noautoskip"))     Autoskip = 0;
-        if (!strcmp(argv[i], "-fps"))             framecounter = 1;
-        if (!strcmp(argv[i], "-nofps"))         framecounter = 0;
-#endif
         if (!strcmp(argv[i], "-sound"))         gAudioEnabled = TRUE;
         if (!strcmp(argv[i], "-nosound"))         gAudioEnabled = FALSE;
-#ifndef DINGUX
-        if (!strcmp(argv[i], "-fullscreen"))    Fullscreen = 1;
-        if (!strcmp(argv[i], "-nofullscreen"))    Fullscreen = 0;
-        if (!strcmp(argv[i], "-fsaa"))            fsaa = 1;
-        if (!strcmp(argv[i], "-nofsaa"))        fsaa = 0;
-        if (!strcmp(argv[i], "-accel"))        accel = 1;
-        if (!strcmp(argv[i], "-noaccel"))        accel = 0;
-        if (!strcmp(argv[i], "-sync"))            sync = 1;
-        if (!strcmp(argv[i], "-nosync"))        sync = 0;
-        if (!strcmp(argv[i], "-2")) LynxScale = 2;
-        if (!strcmp(argv[i], "-3")) LynxScale = 3;
-        if (!strcmp(argv[i], "-4")) LynxScale = 4;
-        if (!strcmp(argv[i], "-lcd")) LynxLCD = 1;
-        if (!strcmp(argv[i], "-nolcd")) LynxLCD = 0;
-#endif
-        if (!strcmp(argv[i], "-frameskip"))
-        {
-            frameskip = atoi(argv[++i]);
-            if ( frameskip > 9 )
-                frameskip = 9;
-        }
-#ifndef DINGUX
-        if (!strcmp(argv[i], "-bpp"))
-        {
-            bpp = atoi(argv[++i]);
-            if ( (bpp != 0) && (bpp != 8) && (bpp != 15) && (bpp != 16) && (bpp != 24) && (bpp != 32) )
-            {
-                bpp = 0;
-            }
-        }
-        if (!strcmp(argv[i], "-rtype"))
-        {
-            rendertype = atoi(argv[++i]);
-            if ( (rendertype != 1) && (rendertype != 2) && (rendertype != 3))
-            {
-                rendertype = 1;
-            }
-        }
-        if (!strcmp(argv[i], "-stype"))
-        {
-            stype = atoi(argv[++i]);
-            if ( (stype != 1) && (stype != 2) && (stype != 3))
-            {
-                stype = 1;
-            }
-        }
-
-        if (!strcmp(argv[i], "-filter"))
-        {
-            filter = atoi(argv[++i]);
-            // Check if the filter number is larger then 1 and not more then 10.
-            if ( (filter <= 10) && (filter >= 1) )
-            {
-                rendertype =  1;  // Filter type only works with SDL rendering
-                LynxScale  =  2;  // Maximum size is 2 times
-                bpp        = 16;  // Maximum BPP is 16.
-            }
-            // Otherwise disable the filter
-            else
-            {
-                filter = 0;
-            }
-        }
-
-        if (!strcmp(argv[i], "-format"))
-        {
-            overlay = atoi(argv[++i]);
-            if ( ( overlay <= 5 ) && (overlay >= 1) )
-            {
-                switch(overlay) {
-                    case 1: 
-                        overlay_format = SDL_YV12_OVERLAY;
-                        strcpy( overlaytype, "YV12" );
-                        break;
-                    case 2:
-                        overlay_format = SDL_IYUV_OVERLAY;
-                        strcpy( overlaytype, "IYUV" );
-                        break;
-                    case 3:
-                        overlay_format = SDL_YUY2_OVERLAY;
-                        strcpy( overlaytype, "YUY2" );
-                        break;
-                    case 4:
-                        overlay_format = SDL_UYVY_OVERLAY;
-                        strcpy( overlaytype, "UYVY" );
-                        break;
-                    case 5:
-                        overlay_format = SDL_YVYU_OVERLAY;
-                        strcpy( overlaytype, "YVYU" );
-                        break;
-                }
-            }    
-            else
-            {
-                overlay_format = SDL_YV12_OVERLAY;
-                strcpy( overlaytype, "YV12" );
-                
-            }
-            printf("Using YUV Overlay format: %s\n",overlaytype);
-        }
-#endif
     }
     gAudioEnabled = TRUE;
 
@@ -544,11 +392,7 @@ int main(int argc, char *argv[])
     handy_sdl_core_init(romname);
 
     // Initialise Handy/SDL video 
-#ifndef DINGUX
-    if(!handy_sdl_video_setup(rendertype, fsaa, Fullscreen, bpp, LynxScale, accel, sync))
-#else
     if(!handy_sdl_video_setup(1, 0, 0, bpp, LynxScale, 0, 0))
-#endif
     {
         return 0;
     }
@@ -566,9 +410,7 @@ int main(int argc, char *argv[])
     handy_sdl_video_init(mpBpp);
 
     // Init gui (move to some other place later)
-#ifdef DINGUX
     gui_Init();
-#endif
 
     handy_sdl_start_time = SDL_GetTicks();
 
@@ -592,7 +434,6 @@ int main(int argc, char *argv[])
                     KeyMask = handy_sdl_on_key_up(handy_sdl_event.key, KeyMask);
                     break;
                 case SDL_KEYDOWN:
-                    #ifdef DINGUX
                     if(handy_sdl_event.key.keysym.sym == SDLK_BACKSPACE) {
                         SDL_FillRect(mainSurface,NULL,SDL_MapRGBA(mainSurface->format, 0, 0, 0, 255));
                         SDL_Flip(mainSurface);
@@ -605,7 +446,6 @@ int main(int argc, char *argv[])
                         KeyMask = 0;
                         break;
                     }
-                    #endif
                     KeyMask = handy_sdl_on_key_down(handy_sdl_event.key, KeyMask);
                     break;
                 default:
@@ -631,60 +471,9 @@ int main(int argc, char *argv[])
             }
             else
             {
-#ifdef HANDY_SDL_DEBUG
-                    printf("gSystemHalt : %d\n", gSystemHalt);
-#endif
-                    gTimerCount++;
+				gTimerCount++;
             }
         }
-
-        // Update screen manually
-        //handy_sdl_display_callback(NULL);
-#ifdef DINGUX
-        gui_CountFPS(); // count fps my way :)
-#endif
-
-        handy_sdl_this_time = SDL_GetTicks();
-
-        fps_counter = (((float)gTimerCount/(handy_sdl_this_time-handy_sdl_start_time))*1000.0);
-#ifdef HANDY_SDL_DEBUG
-        printf("fps_counter : %f\n", fps_counter);
-#endif
-
-        // not needed since we are synchronizing by sound
-        //if( (Throttle) && (fps_counter > 59.99) ) SDL_Delay( (uint32_t)fps_counter );
-
-#ifndef DINGUX
-        if(Autoskip)
-        {
-            if(fps_counter > 60)
-            {
-                frameskip--;
-                   Skipped = frameskip;
-            }
-            else
-            {
-                if(fps_counter < 60)
-                {
-                       Skipped++;
-                       frameskip++;
-                   }
-            }
-        }
-
-        if ( framecounter )
-        {
-
-            if ( handy_sdl_this_time != handy_sdl_start_time )
-            {
-                static char buffer[256];
-
-                sprintf (buffer, "Handy %f ", fps_counter);
-                strcat( buffer, "FPS");
-                SDL_WM_SetCaption( buffer , "HANDY" );
-            }
-        }
-#endif
     }
 
     return 0;

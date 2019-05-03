@@ -25,15 +25,15 @@
 //                             Copyright (c) 2005                           //
 //                                SDLemu Team                               //
 //                                                                          //
-//                          Based upon Handy v0.90 WIN32                    //
+//                          Based upon Handy v0.95 WIN32                    //
 //                            Copyright (c) 1996,1997                       //
 //                                  K. Wilkins                              //
 //////////////////////////////////////////////////////////////////////////////
-// handy_sdl_graphics.h                                                     //
+// handy_sdl_main.h                                                         //
 //////////////////////////////////////////////////////////////////////////////
 //                                                                          //
-// This is the Handy/SDL graphics header file. It manages the graphics      //
-// functions for emulating the Atari Lynx emulator using the SDL Library.   //
+// This is the main Handy/SDL header file. It manages the main functions    //
+// for emulating the Atari Lynx emulator using the SDL Library.             //
 //                                                                          //
 //    N. Wagenaar                                                           //
 // December 2005                                                            //
@@ -53,35 +53,46 @@
 //  closed source version.                                                  //
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef __HANDY_SDL_GRAPHICS_H__
-#define __HANDY_SDL_GRAPHICS_H__
+#ifndef __HANDY_SDL_MAIN_H__
+#define __HANDY_SDL_MAIN_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <SDL/SDL.h>
-#include <SDL/SDL_main.h>
-#include <SDL/SDL_timer.h>
+#include "system.h"
+#include "pixblend.h"
+#include "errorhandler.h"
 
-extern void Clean_Surfaces();
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-extern  void    handy_sdl_draw_graphics(void);
-#ifdef __cplusplus
-}
-#endif
+#define		HANDY_SDL_VERSION	"v1.0"
+#define     HANDY_VERSION 		"Handy 0.95 WIN32"
+#define     HANDY_BASE_FPS		60
 
-inline	void    handy_sdl_scale(void);
-inline  void    handy_sdl_draw_filter(int filtertype, SDL_Surface *src, SDL_Surface *dst, Uint8 *delta);
-		int 	handy_sdl_video_setup(int rendertype, int fsaa, int fullscreen, int bpp, int scale, int accel, int sysnc);
-		void 	handy_sdl_video_init(int bpp);
-		int 	handy_sdl_video_setup_opengl(int fsaa, int accel, int sync);
-		int 	handy_sdl_video_setup_sdl(const SDL_VideoInfo *info);
-		int 	handy_sdl_video_setup_yuv(void);
-		uint8_t  *handy_sdl_display_callback(ULONG objref);
-		void 	handy_sdl_render_buffer(void);
-		void    handy_sdl_video_close(void);
-		int		handy_sdl_video_early_setup(int surfacewidth, int surfaceheight, int sdl_bpp_flag, int videoflags);
+/* SDL declarations */
+extern SDL_Surface		*HandyBuffer; 			// Our Handy/SDL display buffer
+extern SDL_Surface		*mainSurface;	 		// Our Handy/SDL primary display
+extern SDL_Surface		*ScreenSurface;	 		// Our Handy/SDL primary display
+
+/* Handy declarations */
+extern ULONG			*mpLynxBuffer;
+extern CSystem 		    *mpLynx;
+extern int				 mFrameSkip;
+extern int				 mpBpp;
+
+/* Handy/SDL declarations */
+extern int			 	LynxWidth;				// Lynx SDL screen width
+extern int			 	LynxHeight;      		// Lynx SDL screen height
+extern int 		 	    LynxFormat;				// Lynx ROM format type
+extern int 		 	    LynxRotate;				// Lynx ROM rotation type
+extern int				LynxScale;				// Scale output
+extern int				LynxLCD;                // LCD/Scanline Output
+extern int				emulation;              // Emulation enabled
+extern int				rendertype;             // SDL Rendertype
+extern int				stype;					// Scaling/Scanline Routine
+extern int              filter;					// Output Filter
+extern uint32_t           overlay_format;         // YUV Overlay format
+
+inline	int 	handy_sdl_update(void);
+		void 	handy_sdl_rom_info(void);
+		int 	main(int argc, char *argv[]);
+		void	handy_sdl_quit(void);
+		void	handy_sdl_core_reinit(char *romname);
 #endif

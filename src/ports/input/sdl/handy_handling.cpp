@@ -72,31 +72,18 @@ extern SDL_Joystick* joystick;
 //	SDL_JoystickUpdate();
 
 // map keys differently for zipit
-#ifdef DINGUX
-	uint32_t BT_A = SDLK_LCTRL;
-	uint32_t BT_B = SDLK_LALT;
-    #define BT_LEFT     SDLK_LEFT
-    #define BT_RIGHT    SDLK_RIGHT
-    #define BT_UP       SDLK_UP
-    #define BT_DOWN     SDLK_DOWN
-    #define BT_PAUSE    SDLK_RETURN      // START
-    //#define BT_A        SDLK_LCTRL       // A
-    //#define BT_B        SDLK_LALT        // B
-    #define BT_OPT1     SDLK_LSHIFT      // Y
-    #define BT_OPT2     SDLK_SPACE       // X
-    #define BT_OFF      SDLK_ESCAPE      // SELECT
-#else
-    #define BT_LEFT     SDLK_LEFT
-    #define BT_RIGHT    SDLK_RIGHT
-    #define BT_UP       SDLK_UP
-    #define BT_DOWN     SDLK_DOWN
-    #define BT_PAUSE    SDLK_RETURN
-    #define BT_A        SDLK_z
-    #define BT_B        SDLK_x
-    #define BT_OPT1     SDLK_F1
-    #define BT_OPT2     SDLK_F2
-    #define BT_OFF      SDLK_ESCAPE
-#endif
+uint32_t BT_A = SDLK_LCTRL;
+uint32_t BT_B = SDLK_LALT;
+#define BT_LEFT     SDLK_LEFT
+#define BT_RIGHT    SDLK_RIGHT
+#define BT_UP       SDLK_UP
+#define BT_DOWN     SDLK_DOWN
+#define BT_PAUSE    SDLK_RETURN      // START
+//#define BT_A        SDLK_LCTRL       // A
+//#define BT_B        SDLK_LALT        // B
+#define BT_OPT1     SDLK_LSHIFT      // Y
+#define BT_OPT2     SDLK_SPACE       // X
+#define BT_OFF      SDLK_ESCAPE      // SELECT
 
 uint32_t Joystick_Down(uint32_t mask)
 {
