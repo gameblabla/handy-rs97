@@ -37,25 +37,30 @@ void handy_sdl_draw_graphics(void)
 			{
 				case 0:
 					dst.x = 0;
-					dst.h = ((mainSurface->w / LynxWidth) * LynxHeight);
 					dst.y = (mainSurface->h - dst.h) / 2;
 					dst.w = mainSurface->w;
+					dst.h = ((mainSurface->w / LynxWidth) * LynxHeight);
+					if (dst.h > mainSurface->h)
+					{
+						dst.h = ((mainSurface->w / LynxWidth) * LynxHeight) - LynxHeight/2;
+					}
 					dst2.x = 0;
 					dst2.y = 0;
 					dst2.w = LynxWidth;
 					dst2.h = LynxHeight;
-					SDL_SoftStretch(HandyBuffer, &dst2, mainSurface, &dst);
+
+					bitmap_scale(0,0,
+					LynxWidth,LynxHeight,
+					dst.w,dst.h,
+					HandyBuffer->w, mainSurface->w-dst.w,
+					(uint16_t* __restrict__)HandyBuffer->pixels,(uint16_t* __restrict__)mainSurface->pixels+(mainSurface->w-(dst.w))/2+(mainSurface->h-(dst.h))/2*mainSurface->w);
 				break;
 				case 1:
-					dst.x = 0;
-					dst.y = 0;
-					dst.w = mainSurface->w;
-					dst.h = mainSurface->h;
-					dst2.x = 0;
-					dst2.y = 0;
-					dst2.w = LynxWidth;
-					dst2.h = LynxHeight;
-					SDL_SoftStretch(HandyBuffer, &dst2, mainSurface, &dst);
+					bitmap_scale(0,0,
+					LynxWidth,LynxHeight,
+					mainSurface->w,mainSurface->h,
+					HandyBuffer->w, 0,
+					(uint16_t* __restrict__)HandyBuffer->pixels,(uint16_t* __restrict__)mainSurface->pixels);
 				break;
 			}
 		}
@@ -92,6 +97,6 @@ void handy_sdl_draw_graphics(void)
 				break;
 			}
 		}
+		SDL_UnlockSurface(mainSurface);
 	}
-	SDL_UnlockSurface(mainSurface);
 }
