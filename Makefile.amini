@@ -1,6 +1,6 @@
 PRGNAME     = handy
-CC			= /opt/rs90-toolchain/bin/mipsel-linux-gcc
-CXX 		= /opt/rs90-toolchain/bin/mipsel-linux-g++
+CC			= /opt/rs97-toolchain/bin/mipsel-linux-gcc
+CXX 		= /opt/rs97-toolchain/bin/mipsel-linux-g++
 
 PORT = arcademini
 SOUND_OUTPUT = oss
