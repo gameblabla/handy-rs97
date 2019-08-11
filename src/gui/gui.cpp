@@ -419,7 +419,7 @@ void gui_Init()
 void gui_Run()
 {
 	extern int filter; // remove later, temporal hack
-	extern int BT_A, BT_B; // remove later, temporal hack
+	extern uint32_t BT_A, BT_B; // remove later, temporal hack
 	
 	gui_ClearScreen();
 	gui_MainMenuRun(&gui_MainMenu);
