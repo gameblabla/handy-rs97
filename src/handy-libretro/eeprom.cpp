@@ -14,6 +14,7 @@ CEEPROM::CEEPROM()
 {
    type=0;
    *filename=0;
+   memset(romdata, 0xFF, sizeof(romdata));
    Reset();
 }
 
@@ -24,7 +25,6 @@ void CEEPROM::Reset(void)
    readdata=0;
 
    data=0;
-   memset(romdata, 0xFF, sizeof(romdata));
    addr=0;
    sendbits=0;
    readonly=true;
