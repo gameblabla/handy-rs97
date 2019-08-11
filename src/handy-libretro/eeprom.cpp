@@ -24,7 +24,7 @@ void CEEPROM::Reset(void)
    readdata=0;
 
    data=0;
-   memset(romdata, 0, sizeof(romdata));
+   memset(romdata, 0xFF, sizeof(romdata));
    addr=0;
    sendbits=0;
    readonly=true;
