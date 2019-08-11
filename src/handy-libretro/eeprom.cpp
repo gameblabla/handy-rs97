@@ -14,7 +14,6 @@ CEEPROM::CEEPROM()
 {
    type=0;
    *filename=0;
-   memset(romdata, 0xFF, sizeof(romdata));
    Reset();
 }
 
@@ -33,6 +32,8 @@ void CEEPROM::Reset(void)
    counter=0;
    iodir=0;
    iodat=0;
+   
+   mAUDIN_ext=0;
 }
 
 CEEPROM::~CEEPROM()
