@@ -1,10 +1,10 @@
 PRGNAME     = handy
-CC			= /opt/bittboy-toolchain/bin/arm-miyoo-linux-musleabi-gcc
-CXX 		= /opt/bittboy-toolchain/bin/arm-miyoo-linux-musleabi-g++
+CC			= /opt/bittboy-toolchain/bin/arm-linux-gcc
+CXX 		= /opt/bittboy-toolchain/bin/arm-linux-g++
 
 PORT = rs97
 SOUND_OUTPUT = alsa
-PROFILE = 0
+PROFILE = APPLY
 
 SRCDIR		= ./src/ ./src/gui/ ./src/handy-libretro src/ports ./src/ports/input/sdl src/sdlemu ./src/unzip
 VPATH		= $(SRCDIR)
@@ -14,7 +14,7 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -fno-common -flto -fwhole-program -fsingle-precision-constant -fno-PIC -fpermissive
+CFLAGS		= -Ofast -fdata-sections -ffunction-sections -fno-common -flto -fwhole-program -fsingle-precision-constant -fno-PIC -fpermissive -march=armv5te -mtune=arm926ej-s
 CFLAGS		+= -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH -D$(PORT)
 CFLAGS		+= -I./src -I./src/handy-libretro -I./src/sdlemu -Isrc/ports -Isrc/ports/sound -Isrc/ports/sound -Isrc/ports/input/sdl
 
@@ -39,7 +39,7 @@ SRCDIR		+= ./src/ports/sound/libao
 endif
 
 ifeq ($(PROFILE), YES)
-CFLAGS 		+= -fprofile-generate=/home/retrofw/profile
+CFLAGS 		+= -fprofile-generate=/mnt/profile
 else ifeq ($(PROFILE), APPLY)
 CFLAGS		+= -fprofile-use -fbranch-probabilities
 endif
