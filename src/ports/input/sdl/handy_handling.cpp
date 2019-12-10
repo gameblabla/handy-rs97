@@ -66,285 +66,319 @@
 #include "handy_sdl_main.h"
 #include "handy_sdl_handling.h"
 
+
 extern int Invert;
+extern int gui_SwapAB;
+extern void gui_Run();
 extern SDL_Joystick* joystick;
+int16_t x_move = 0, y_move = 0;
 
 //	SDL_JoystickUpdate();
 
 // map keys differently for zipit
-uint32_t BT_A = SDLK_LCTRL;
-uint32_t BT_B = SDLK_LALT;
 #define BT_LEFT     SDLK_LEFT
 #define BT_RIGHT    SDLK_RIGHT
 #define BT_UP       SDLK_UP
 #define BT_DOWN     SDLK_DOWN
 #define BT_PAUSE    SDLK_RETURN      // START
-//#define BT_A        SDLK_LCTRL       // A
-//#define BT_B        SDLK_LALT        // B
+#define BT_A        SDLK_LCTRL       // A
+#define BT_B        SDLK_LALT        // B
 #define BT_OPT1     SDLK_LSHIFT      // Y
 #define BT_OPT2     SDLK_SPACE       // X
 #define BT_OFF      SDLK_ESCAPE      // SELECT
 
-uint32_t Joystick_Down(uint32_t mask)
+uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 {
-    int16_t x_move = 0, y_move = 0;
-    if (joystick) 
-    {
-        x_move = SDL_JoystickGetAxis(joystick, 0);
-        y_move = SDL_JoystickGetAxis(joystick, 1);
-
-		switch (Invert)
+	while (SDL_PollEvent(&event))
+	{
+		switch(event.type)
 		{
-			case 0:
-				if(x_move > 500)
-					mask |= BUTTON_RIGHT;
+			case SDL_KEYDOWN:
+				switch(event.key.keysym.sym) 
+				{
+						case BT_LEFT: {  // Lynx LEFT
+							switch(Invert)
+							{
+								case 0:
+									mask|=BUTTON_LEFT;
+								break;
+								case 1:
+									mask|=BUTTON_UP;
+								break;
+								case 2:
+									mask|=BUTTON_DOWN;
+								break;
+							}
+							break;
+						}
+						case BT_RIGHT: { // Lynx RIGHT
+							switch(Invert)
+							{
+								case 0:
+									mask|=BUTTON_RIGHT;
+								break;
+								case 1:
+									mask|=BUTTON_DOWN;
+								break;
+								case 2:
+									mask|=BUTTON_UP;
+								break;
+							}
+							break;
+						}
 
-				if(x_move < -500)
-					mask |= BUTTON_LEFT;
+						case BT_UP: { // Lynx UP
+							switch(Invert)
+							{
+								case 0:
+									mask|=BUTTON_UP;
+								break;
+								case 1:
+									mask|=BUTTON_RIGHT;
+								break;
+								case 2:
+									mask|=BUTTON_LEFT;
+								break;
+							}
+							break;
+						}
 
-				if(y_move > 500)
-					mask |= BUTTON_DOWN;
+						case BT_DOWN: { // Lynx DOWN
+							switch(Invert)
+							{
+								case 0:
+									mask|=BUTTON_DOWN;
+								break;
+								case 1:
+									mask|=BUTTON_LEFT;
+								break;
+								case 2:
+									mask|=BUTTON_RIGHT;
+								break;
+							}
+							break;
+						}
 
-				if(y_move < -500)
-					mask |= BUTTON_UP;
+						case BT_PAUSE: { // Lynx PAUSE
+							mask|=BUTTON_PAUSE;
+							break;
+						}
+						
+						case BT_A: { // Lynx A
+							if (gui_SwapAB == 1) mask|=BUTTON_B;
+							else mask|=BUTTON_A;
+							break;
+						}
+
+						case BT_B: { // Lynx B
+							if (gui_SwapAB == 1) mask|=BUTTON_A;
+							else mask|=BUTTON_B;
+							break;
+						}
+
+						case BT_OPT1: { // Lynx Option 1
+							mask|=BUTTON_OPT1;
+							break;
+						}
+
+						case BT_OPT2: { // Lynx Option 2
+							mask|=BUTTON_OPT2;
+							break;
+						}
+
+						default: {
+							break;
+						}
+
+				}
 			break;
-			case 1:
-				if(x_move > 500)
-					mask |= BUTTON_DOWN;
-				if(x_move < -500)
-					mask |= BUTTON_UP;
+			case SDL_KEYUP:
+				switch(event.key.keysym.sym) 
+				{
+						case SDLK_ESCAPE:
+						case SDLK_END:
+						case SDLK_RCTRL:
+						case SDLK_HOME:
+							gui_Run();
+							mask = 0;
+							x_move = 0;
+							y_move = 0;
+						break;
+						case BT_LEFT: {  // Lynx LEFT
+							switch(Invert)
+							{
+								case 0:
+									mask&= ~BUTTON_LEFT;
+								break;
+								case 1:
+									mask&= ~BUTTON_UP;
+								break;
+								case 2:
+									mask&= ~BUTTON_DOWN;
+								break;
+							}
+							break;
+						}
+						case BT_RIGHT: { // Lynx RIGHT
+							switch(Invert)
+							{
+								case 0:
+									mask&= ~BUTTON_RIGHT;
+								break;
+								case 1:
+									mask&= ~BUTTON_DOWN;
+								break;
+								case 2:
+									mask&= ~BUTTON_UP;
+								break;
+							}
+							break;
+						}
 
-				 if(y_move > 500)
-					mask |= BUTTON_LEFT;
+						case BT_UP: { // Lynx UP
+							switch(Invert)
+							{
+								case 0:
+									mask&= ~BUTTON_UP;
+								break;
+								case 1:
+									mask&= ~BUTTON_RIGHT;
+								break;
+								case 2:
+									mask&= ~BUTTON_LEFT;
+								break;
+							}
+							break;
+						}
 
-				if(y_move < -500)
-					mask |= BUTTON_RIGHT;
+						case BT_DOWN: { // Lynx DOWN
+							switch(Invert)
+							{
+								case 0:
+									mask&= ~BUTTON_DOWN;
+								break;
+								case 1:
+									mask&= ~BUTTON_LEFT;
+								break;
+								case 2:
+									mask&= ~BUTTON_RIGHT;
+								break;
+							}
+							break;
+						}
+						
+						case BT_A: { // Lynx A
+							if (gui_SwapAB == 1) mask&= ~BUTTON_B;
+							else mask&= ~BUTTON_A;
+							break;
+						}
+
+						case BT_B: { // Lynx B
+							if (gui_SwapAB == 1) mask&= ~BUTTON_A;
+							else mask&= ~BUTTON_B;
+							break;
+						}
+
+						case BT_PAUSE: { // Lynx PAUSE
+							mask&= ~BUTTON_PAUSE;
+							break;
+						}
+
+						case BT_OPT1: { // Lynx Option 1
+							mask&= ~BUTTON_OPT1;
+							break;
+						}
+
+						case BT_OPT2: { // Lynx Option 2
+							mask&= ~BUTTON_OPT2;
+							break;
+						}
+
+						default: {
+							break;
+						}
+
+				}
 			break;
-			
-			/* KLAX */
-			case 2:
-				if (x_move > 500)
-				mask |= BUTTON_UP;
-				if (x_move < -500)
-				mask |= BUTTON_DOWN;
-
-				if (y_move > 500)
-				mask |= BUTTON_RIGHT;
-
-				if (y_move < -500)
-				mask |= BUTTON_LEFT;
+			case SDL_JOYAXISMOTION:
+				if (event.jaxis.axis == 0) x_move = event.jaxis.value;
+				else if (event.jaxis.axis == 1) y_move = event.jaxis.value;
+			break;
+			case SDL_JOYBUTTONDOWN:
+			switch(event.jbutton.button)
+			{
+				case 0:
+					mask |= BUTTON_OPT1;
+				break;
+				case 1:
+					mask |= BUTTON_A;
+				break;
+				case 2:
+					mask |= BUTTON_B;
+				break;
+				case 3:
+					mask |= BUTTON_OPT2;
+				break;
+			}
+			break;
+			case SDL_JOYBUTTONUP:
+			switch(event.jbutton.button)
+			{
+				case 0:
+					mask&= ~BUTTON_OPT1;
+				break;
+				case 1:
+					mask&= ~BUTTON_A;
+				break;
+				case 2:
+					mask&= ~BUTTON_B;
+				break;
+				case 3:
+					mask&= ~BUTTON_OPT2;
+				break;
+			}
+			break;
+			default:
+				mask = 0;
 			break;
 		}
+	}
+    
+	switch (Invert)
+	{
+		case 0:
+			if(x_move > 500)
+				mask |= BUTTON_RIGHT;
+			else if(x_move < -500)
+				mask |= BUTTON_LEFT;
 
-		if(SDL_JoystickGetButton(joystick, 1) == SDL_PRESSED)
-			mask |= BUTTON_A;
-		else if(SDL_JoystickGetButton(joystick, 1) == SDL_RELEASED)
-			mask &= ~BUTTON_A;
+			if(y_move > 500)
+				mask |= BUTTON_DOWN;
+			else if(y_move < -500)
+				mask |= BUTTON_UP;
+		break;
+		case 1:
+			if(x_move > 500)
+				mask |= BUTTON_DOWN;
+			else if(x_move < -500)
+				mask |= BUTTON_UP;
+
+			if(y_move > 500)
+				mask |= BUTTON_LEFT;
+			else if(y_move < -500)
+				mask |= BUTTON_RIGHT;
+		break;
 			
-		if(SDL_JoystickGetButton(joystick, 2) == SDL_PRESSED)
-			mask |= BUTTON_B;
-		else if(SDL_JoystickGetButton(joystick, 2) == SDL_RELEASED)
-			mask &= ~BUTTON_B;
-			
-		if(SDL_JoystickGetButton(joystick, 0) == SDL_PRESSED)
-			mask |= BUTTON_OPT1;
-		else if(SDL_JoystickGetButton(joystick, 0) == SDL_RELEASED)
-			mask &= ~BUTTON_OPT1;
-			
-		if(SDL_JoystickGetButton(joystick, 3) == SDL_PRESSED)
-			mask |= BUTTON_OPT2;
-		else if(SDL_JoystickGetButton(joystick, 3) == SDL_RELEASED)
-			mask &= ~BUTTON_OPT2;		
-    }
+		/* KLAX */
+		case 2:
+			if (x_move > 500) mask |= BUTTON_UP;
+			else if (x_move < -500) mask |= BUTTON_DOWN;
+
+			if (y_move > 500) mask |= BUTTON_RIGHT;
+			else if (y_move < -500) mask |= BUTTON_LEFT;
+		break;
+	}
+    
 	return mask;
 }
 
-
-int  handy_sdl_on_key_down(SDL_KeyboardEvent key, int mask)
-{
-    if(key.keysym.sym == BT_B) return mask |= BUTTON_B;
-    if(key.keysym.sym == BT_A) return mask |= BUTTON_A;
-
-	switch(key.keysym.sym) 
-	{
-			case BT_LEFT: {  // Lynx LEFT
-				switch(Invert)
-				{
-					case 0:
-						mask|=BUTTON_LEFT;
-					break;
-					case 1:
-						mask|=BUTTON_UP;
-					break;
-					case 2:
-						mask|=BUTTON_DOWN;
-					break;
-				}
-				break;
-			}
-			case BT_RIGHT: { // Lynx RIGHT
-				switch(Invert)
-				{
-					case 0:
-						mask|=BUTTON_RIGHT;
-					break;
-					case 1:
-						mask|=BUTTON_DOWN;
-					break;
-					case 2:
-						mask|=BUTTON_UP;
-					break;
-				}
-				break;
-			}
-
-			case BT_UP: { // Lynx UP
-				switch(Invert)
-				{
-					case 0:
-						mask|=BUTTON_UP;
-					break;
-					case 1:
-						mask|=BUTTON_RIGHT;
-					break;
-					case 2:
-						mask|=BUTTON_LEFT;
-					break;
-				}
-				break;
-			}
-
-			case BT_DOWN: { // Lynx DOWN
-				switch(Invert)
-				{
-					case 0:
-						mask|=BUTTON_DOWN;
-					break;
-					case 1:
-						mask|=BUTTON_LEFT;
-					break;
-					case 2:
-						mask|=BUTTON_RIGHT;
-					break;
-				}
-				break;
-			}
-
-			case BT_PAUSE: { // Lynx PAUSE
-				mask|=BUTTON_PAUSE;
-				break;
-			}
-
-			case BT_OPT1: { // Lynx Option 1
-				mask|=BUTTON_OPT1;
-				break;
-			}
-
-			case BT_OPT2: { // Lynx Option 2
-				mask|=BUTTON_OPT2;
-				break;
-			}
-
-			default: {
-				break;
-			}
-
-	}
-
-    return mask;
-
-}
-
-int  handy_sdl_on_key_up(SDL_KeyboardEvent key, int mask)
-{
-    if(key.keysym.sym == BT_B) return mask &= ~BUTTON_B;
-    if(key.keysym.sym == BT_A) return mask &= ~BUTTON_A;
-
-	switch(key.keysym.sym) 
-	{
-			case BT_LEFT: {  // Lynx LEFT
-				switch(Invert)
-				{
-					case 0:
-						mask&= ~BUTTON_LEFT;
-					break;
-					case 1:
-						mask&= ~BUTTON_UP;
-					break;
-					case 2:
-						mask&= ~BUTTON_DOWN;
-					break;
-				}
-				break;
-			}
-			case BT_RIGHT: { // Lynx RIGHT
-				switch(Invert)
-				{
-					case 0:
-						mask&= ~BUTTON_RIGHT;
-					break;
-					case 1:
-						mask&= ~BUTTON_DOWN;
-					break;
-					case 2:
-						mask&= ~BUTTON_UP;
-					break;
-				}
-				break;
-			}
-
-			case BT_UP: { // Lynx UP
-				switch(Invert)
-				{
-					case 0:
-						mask&= ~BUTTON_UP;
-					break;
-					case 1:
-						mask&= ~BUTTON_RIGHT;
-					break;
-					case 2:
-						mask&= ~BUTTON_LEFT;
-					break;
-				}
-				break;
-			}
-
-			case BT_DOWN: { // Lynx DOWN
-				switch(Invert)
-				{
-					case 0:
-						mask&= ~BUTTON_DOWN;
-					break;
-					case 1:
-						mask&= ~BUTTON_LEFT;
-					break;
-					case 2:
-						mask&= ~BUTTON_RIGHT;
-					break;
-				}
-				break;
-			}
-
-			case BT_PAUSE: { // Lynx PAUSE
-				mask&= ~BUTTON_PAUSE;
-				break;
-			}
-
-			case BT_OPT1: { // Lynx Option 1
-				mask&= ~BUTTON_OPT1;
-				break;
-			}
-
-			case BT_OPT2: { // Lynx Option 2
-				mask&= ~BUTTON_OPT2;
-				break;
-			}
-
-			default: {
-				break;
-			}
-
-	}
-	
-    return mask;
-}

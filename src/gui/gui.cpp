@@ -419,20 +419,9 @@ void gui_Init()
 void gui_Run()
 {
 	extern int filter; // remove later, temporal hack
-	extern uint32_t BT_A, BT_B; // remove later, temporal hack
 	
 	gui_ClearScreen();
 	gui_MainMenuRun(&gui_MainMenu);
-	if (gui_SwapAB == 0) 
-	{
-		BT_A = SDLK_LCTRL;
-		BT_B = SDLK_LALT;
-	}
-	else 
-	{
-		BT_A = SDLK_LALT;
-		BT_B = SDLK_LCTRL;
-	}
 	gui_ClearScreen();
 }
 

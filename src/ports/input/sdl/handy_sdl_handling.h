@@ -63,6 +63,5 @@
 #include <SDL/SDL_main.h>
 #include <SDL/SDL_timer.h>
  
-int		handy_sdl_on_key_up(SDL_KeyboardEvent key, int mask);
-int		handy_sdl_on_key_down(SDL_KeyboardEvent key, int mask);
+extern uint32_t Joystick_Down(uint32_t mask, SDL_Event event);
 #endif

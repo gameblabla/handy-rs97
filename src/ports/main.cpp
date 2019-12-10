@@ -76,7 +76,6 @@
 SDL_Surface        *HandyBuffer, *mainSurface;
 extern SDL_Surface* menuSurface;
 SDL_Joystick *joystick;
-extern uint32_t Joystick_Down(uint32_t mask);
 
 /* Handy declarations */
 ULONG				*mpLynxBuffer;
@@ -394,31 +393,8 @@ int main(int argc, char *argv[])
         OldKeyMask = KeyMask;
         
 		SDL_JoystickUpdate();
-		
-		KeyMask = Joystick_Down(KeyMask);
-
-        // Getting events for keyboard and/or joypad handling
-        while(SDL_PollEvent(&handy_sdl_event))
-        {
-            switch(handy_sdl_event.type)
-            {
-                case SDL_KEYUP:
-                    KeyMask = handy_sdl_on_key_up(handy_sdl_event.key, KeyMask);
-                    break;
-                case SDL_KEYDOWN:
-					KeyMask = handy_sdl_on_key_down(handy_sdl_event.key, KeyMask);
-                    if (handy_sdl_event.key.keysym.sym == SDLK_ESCAPE || handy_sdl_event.key.keysym.sym == SDLK_END || handy_sdl_event.key.keysym.sym == SDLK_RCTRL) 
-                    {
-                        gui_Run();
-                        KeyMask = 0;
-                        break;
-                    }
-                    break;
-                default:
-                    KeyMask = 0;
-                    break;
-            }
-        }
+        
+        KeyMask = Joystick_Down(KeyMask, handy_sdl_event);
 
         // Checking if we had SDL handling events and then we'll update the Handy button events.
         if (OldKeyMask != KeyMask)
