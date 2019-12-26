@@ -75,8 +75,9 @@
 /* SDL declarations */
 SDL_Surface        *HandyBuffer, *mainSurface;
 extern SDL_Surface* menuSurface;
+#ifndef NOJOYSTICK
 SDL_Joystick *joystick;
-
+#endif
 /* Handy declarations */
 ULONG				*mpLynxBuffer;
 CSystem				*mpLynx;
@@ -262,7 +263,11 @@ static void Cleanup_mess(void)
 	if (menuSurface) SDL_FreeSurface(menuSurface);
 
     // Close SDL Subsystems
-    SDL_QuitSubSystem(SDL_INIT_VIDEO|SDL_INIT_JOYSTICK);
+    SDL_QuitSubSystem(SDL_INIT_VIDEO
+    #ifndef NOJOYSTICK
+    |SDL_INIT_JOYSTICK
+    #endif
+    );
     SDL_Quit();
     
 	if (mpLynx) delete mpLynx;
@@ -352,13 +357,19 @@ int main(int argc, char *argv[])
 
     // Initalising SDL for Audio and Video support
     printf("Initialising SDL...           ");
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO
+    #ifndef NOJOYSTICK
+    | SDL_INIT_JOYSTICK
+    #endif
+    ) < 0) {
         fprintf(stderr, "FAILED : Unable to init SDL: %s\n", SDL_GetError());
         return 1;
     }
     
+    #ifndef NOJOYSTICK
 	if(SDL_NumJoysticks() > 0)
 		joystick = SDL_JoystickOpen(0);
+	#endif
     printf("[DONE]\n");
 
     // Primary initalise of Handy - should be called AFTER SDL_Init() but BEFORE handy_sdl_video_setup()
@@ -392,7 +403,9 @@ int main(int argc, char *argv[])
         int OldKeyMask, KeyMask = mpLynx->GetButtonData();
         OldKeyMask = KeyMask;
         
+        #ifndef NOJOYSTICK
 		SDL_JoystickUpdate();
+		#endif
         
         KeyMask = Joystick_Down(KeyMask, handy_sdl_event);
 

@@ -70,8 +70,12 @@
 extern int Invert;
 extern int gui_SwapAB;
 extern void gui_Run();
+#ifndef NOJOYSTICK
 extern SDL_Joystick* joystick;
+#define AXIS_JOYSTICK 8192
 int16_t x_move = 0, y_move = 0;
+uint32_t dpad_pressed[4] = {0, 0, 0, 0};
+#endif
 
 //	SDL_JoystickUpdate();
 
@@ -97,6 +101,9 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 				switch(event.key.keysym.sym) 
 				{
 						case BT_LEFT: {  // Lynx LEFT
+							#ifndef NOJOYSTICK
+							dpad_pressed[0] = 1;
+							#endif
 							switch(Invert)
 							{
 								case 0:
@@ -112,6 +119,9 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 							break;
 						}
 						case BT_RIGHT: { // Lynx RIGHT
+							#ifndef NOJOYSTICK
+							dpad_pressed[1] = 1;
+							#endif
 							switch(Invert)
 							{
 								case 0:
@@ -128,6 +138,9 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 						}
 
 						case BT_UP: { // Lynx UP
+							#ifndef NOJOYSTICK
+							dpad_pressed[2] = 1;
+							#endif
 							switch(Invert)
 							{
 								case 0:
@@ -144,6 +157,9 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 						}
 
 						case BT_DOWN: { // Lynx DOWN
+							#ifndef NOJOYSTICK
+							dpad_pressed[3] = 1;
+							#endif
 							switch(Invert)
 							{
 								case 0:
@@ -201,10 +217,17 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 						case SDLK_HOME:
 							gui_Run();
 							mask = 0;
+							#ifndef NOJOYSTICK
 							x_move = 0;
 							y_move = 0;
+							dpad_pressed[0] = 0;
+							dpad_pressed[1] = 0;
+							dpad_pressed[2] = 0;
+							dpad_pressed[3] = 0;
+							#endif
 						break;
 						case BT_LEFT: {  // Lynx LEFT
+							dpad_pressed[0] = 0;
 							switch(Invert)
 							{
 								case 0:
@@ -220,6 +243,9 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 							break;
 						}
 						case BT_RIGHT: { // Lynx RIGHT
+							#ifndef NOJOYSTICK
+							dpad_pressed[1] = 0;
+							#endif
 							switch(Invert)
 							{
 								case 0:
@@ -236,6 +262,9 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 						}
 
 						case BT_UP: { // Lynx UP
+							#ifndef NOJOYSTICK
+							dpad_pressed[2] = 0;
+							#endif
 							switch(Invert)
 							{
 								case 0:
@@ -252,6 +281,9 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 						}
 
 						case BT_DOWN: { // Lynx DOWN
+							#ifndef NOJOYSTICK
+							dpad_pressed[3] = 0;
+							#endif
 							switch(Invert)
 							{
 								case 0:
@@ -300,6 +332,7 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 
 				}
 			break;
+			#ifndef NOJOYSTICK
 			case SDL_JOYAXISMOTION:
 				if (event.jaxis.axis == 0) x_move = event.jaxis.value;
 				else if (event.jaxis.axis == 1) y_move = event.jaxis.value;
@@ -338,46 +371,79 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 				break;
 			}
 			break;
+			#endif
 			default:
 				mask = 0;
 			break;
 		}
 	}
     
+    #ifndef NOJOYSTICK
 	switch (Invert)
 	{
 		case 0:
-			if(x_move > 500)
+			if(x_move > AXIS_JOYSTICK)
 				mask |= BUTTON_RIGHT;
-			else if(x_move < -500)
+			else if(x_move < -AXIS_JOYSTICK)
 				mask |= BUTTON_LEFT;
+			else if (dpad_pressed[0] == 0 && dpad_pressed[1] == 0)
+			{
+				mask &= ~BUTTON_RIGHT;
+				mask &= ~BUTTON_LEFT;
+			}
 
-			if(y_move > 500)
+			if(y_move > AXIS_JOYSTICK)
 				mask |= BUTTON_DOWN;
-			else if(y_move < -500)
+			else if(y_move < -AXIS_JOYSTICK)
 				mask |= BUTTON_UP;
+			else if (dpad_pressed[2] == 0 && dpad_pressed[3] == 0)
+			{
+				mask &= ~BUTTON_UP;
+				mask &= ~BUTTON_DOWN;
+			}
 		break;
 		case 1:
-			if(x_move > 500)
+			if(x_move > AXIS_JOYSTICK)
 				mask |= BUTTON_DOWN;
-			else if(x_move < -500)
+			else if(x_move < -AXIS_JOYSTICK)
 				mask |= BUTTON_UP;
+			else if (dpad_pressed[2] == 0 && dpad_pressed[3] == 0)
+			{
+				mask &= ~BUTTON_UP;
+				mask &= ~BUTTON_DOWN;
+			}
 
-			if(y_move > 500)
+			if(y_move > AXIS_JOYSTICK)
 				mask |= BUTTON_LEFT;
-			else if(y_move < -500)
+			else if(y_move < -AXIS_JOYSTICK)
 				mask |= BUTTON_RIGHT;
+			else if (dpad_pressed[0] == 0 && dpad_pressed[1] == 0)
+			{
+				mask &= ~BUTTON_RIGHT;
+				mask &= ~BUTTON_LEFT;
+			}
 		break;
 			
 		/* KLAX */
 		case 2:
-			if (x_move > 500) mask |= BUTTON_UP;
-			else if (x_move < -500) mask |= BUTTON_DOWN;
+			if (x_move > AXIS_JOYSTICK) mask |= BUTTON_UP;
+			else if (x_move < -AXIS_JOYSTICK) mask |= BUTTON_DOWN;
+			else if (dpad_pressed[2] == 0 && dpad_pressed[3] == 0)
+			{
+				mask &= ~BUTTON_UP;
+				mask &= ~BUTTON_DOWN;
+			}
 
-			if (y_move > 500) mask |= BUTTON_RIGHT;
-			else if (y_move < -500) mask |= BUTTON_LEFT;
+			if (y_move > AXIS_JOYSTICK) mask |= BUTTON_RIGHT;
+			else if (y_move < -AXIS_JOYSTICK) mask |= BUTTON_LEFT;
+			else if (dpad_pressed[0] == 0 && dpad_pressed[1] == 0)
+			{
+				mask &= ~BUTTON_RIGHT;
+				mask &= ~BUTTON_LEFT;
+			}
 		break;
 	}
+	#endif
     
 	return mask;
 }
