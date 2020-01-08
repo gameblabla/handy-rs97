@@ -1643,13 +1643,6 @@ void CMikie::Poke(ULONG addr,UBYTE data)
          break;
 
       case (AUD0VOL&0xff):
-         // Counter is disabled when volume is zero for optimisation
-         // reasons, we must update the last use position to stop problems
-         if(!mAUDIO_0_VOLUME && data)
-      {
-         mAUDIO_0_LAST_COUNT=gSystemCycleCount;
-         gNextTimerEvent=gSystemCycleCount;
-      }
          mAUDIO_0_VOLUME=(SBYTE)data;
          TRACE_MIKIE2("Poke(AUD0VOL,%02x) at PC=%04x",data,mSystem.mCpu->GetPC());
          break;
@@ -1708,13 +1701,6 @@ void CMikie::Poke(ULONG addr,UBYTE data)
          break;
 
       case (AUD1VOL&0xff):
-         // Counter is disabled when volume is zero for optimisation
-         // reasons, we must update the last use position to stop problems
-         if(!mAUDIO_1_VOLUME && data)
-      {
-         mAUDIO_1_LAST_COUNT=gSystemCycleCount;
-         gNextTimerEvent=gSystemCycleCount;
-      }
          mAUDIO_1_VOLUME=(SBYTE)data;
          TRACE_MIKIE2("Poke(AUD1VOL,%02x) at PC=%04x",data,mSystem.mCpu->GetPC());
          break;
@@ -1773,13 +1759,6 @@ void CMikie::Poke(ULONG addr,UBYTE data)
          break;
 
       case (AUD2VOL&0xff):
-         // Counter is disabled when volume is zero for optimisation
-         // reasons, we must update the last use position to stop problems
-         if(!mAUDIO_2_VOLUME && data)
-      {
-         mAUDIO_2_LAST_COUNT=gSystemCycleCount;
-         gNextTimerEvent=gSystemCycleCount;
-      }
          mAUDIO_2_VOLUME=(SBYTE)data;
          TRACE_MIKIE2("Poke(AUD2VOL,%02x) at PC=%04x",data,mSystem.mCpu->GetPC());
          break;
@@ -1838,13 +1817,6 @@ void CMikie::Poke(ULONG addr,UBYTE data)
          break;
 
       case (AUD3VOL&0xff):
-         // Counter is disabled when volume is zero for optimisation
-         // reasons, we must update the last use position to stop problems
-         if(!mAUDIO_3_VOLUME && data)
-      {
-         mAUDIO_3_LAST_COUNT=gSystemCycleCount;
-         gNextTimerEvent=gSystemCycleCount;
-      }
          mAUDIO_3_VOLUME=(SBYTE)data;
          TRACE_MIKIE2("Poke(AUD3VOL,%02x) at PC=%04x",data,mSystem.mCpu->GetPC());
          break;
@@ -3614,7 +3586,7 @@ inline void CMikie::Update(void)
             // Audio 0
             //
             //				if(mAUDIO_0_ENABLE_COUNT && !mAUDIO_0_TIMER_DONE && mAUDIO_0_VOLUME && mAUDIO_0_BKUP)
-            if(mAUDIO_0_ENABLE_COUNT && (mAUDIO_0_ENABLE_RELOAD || !mAUDIO_0_TIMER_DONE) && mAUDIO_0_VOLUME && mAUDIO_0_BKUP)
+            if(mAUDIO_0_ENABLE_COUNT && (mAUDIO_0_ENABLE_RELOAD || !mAUDIO_0_TIMER_DONE))
             {
                decval=0;
 
@@ -3714,7 +3686,7 @@ inline void CMikie::Update(void)
             // Audio 1
             //
             //				if(mAUDIO_1_ENABLE_COUNT && !mAUDIO_1_TIMER_DONE && mAUDIO_1_VOLUME && mAUDIO_1_BKUP)
-            if(mAUDIO_1_ENABLE_COUNT && (mAUDIO_1_ENABLE_RELOAD || !mAUDIO_1_TIMER_DONE) && mAUDIO_1_VOLUME && mAUDIO_1_BKUP)
+            if(mAUDIO_1_ENABLE_COUNT && (mAUDIO_1_ENABLE_RELOAD || !mAUDIO_1_TIMER_DONE))
             {
                decval=0;
 
@@ -3814,7 +3786,7 @@ inline void CMikie::Update(void)
             // Audio 2
             //
             //				if(mAUDIO_2_ENABLE_COUNT && !mAUDIO_2_TIMER_DONE && mAUDIO_2_VOLUME && mAUDIO_2_BKUP)
-            if(mAUDIO_2_ENABLE_COUNT && (mAUDIO_2_ENABLE_RELOAD || !mAUDIO_2_TIMER_DONE) && mAUDIO_2_VOLUME && mAUDIO_2_BKUP)
+            if(mAUDIO_2_ENABLE_COUNT && (mAUDIO_2_ENABLE_RELOAD || !mAUDIO_2_TIMER_DONE))
             {
                decval=0;
 
@@ -3914,7 +3886,7 @@ inline void CMikie::Update(void)
             // Audio 3
             //
             //				if(mAUDIO_3_ENABLE_COUNT && !mAUDIO_3_TIMER_DONE && mAUDIO_3_VOLUME && mAUDIO_3_BKUP)
-            if(mAUDIO_3_ENABLE_COUNT && (mAUDIO_3_ENABLE_RELOAD || !mAUDIO_3_TIMER_DONE) && mAUDIO_3_VOLUME && mAUDIO_3_BKUP)
+            if(mAUDIO_3_ENABLE_COUNT && (mAUDIO_3_ENABLE_RELOAD || !mAUDIO_3_TIMER_DONE))
             {
                decval=0;
 
