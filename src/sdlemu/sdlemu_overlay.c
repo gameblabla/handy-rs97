@@ -314,18 +314,6 @@ inline void Convert32bit(SDL_Surface *display)
 
 inline void sdlemu_draw_overlay(SDL_Surface *s, int size, int width, int height)
 {
-        static SDL_Rect		  src;
-        static SDL_Rect		  dest;
-
-        src.x  = 0;
-        src.y  = 0;
-        src.w  = width;
-        src.h  = height;
-        dest.x = 0;
-        dest.y = 0;
-        dest.w = width;
-        dest.h = height;
-
 		SDL_LockYUVOverlay(overlay);
 
         Convert32bit(s);

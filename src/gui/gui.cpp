@@ -98,17 +98,17 @@ typedef struct {
 #ifdef RS90
 const char* gui_ScaleNames[] = {"Original", "Fullscreen"};
 #else
-const char* gui_ScaleNames[] = {"Prefer Aspect", "Fullscreen"};
+const char* gui_ScaleNames[] = {"Keep Aspect", "Fullscreen"};
 #endif
 const char* gui_YesNo[] = {"no", "yes"};
 
 MENUITEM gui_MainMenuItems[] = {
 	/* It's unusable on the RS-90, disable */
-	{(const char *)"Config", NULL, NULL, NULL, &gui_ConfigMenuRun},
-	{(const char *)"Load state: ", &gui_LoadSlot, 9, NULL, &gui_LoadState},
-	{(const char *)"Save state: ", &gui_LoadSlot, 9, NULL, &gui_SaveState},
-	{(const char *)"Reset", NULL, NULL, NULL, &gui_Reset},
-	{(const char *)"Exit", NULL, NULL, NULL, &handy_sdl_quit} // extern in handy_sdl_main.cpp
+	{(const char *)"Config", 0, 0, 0, &gui_ConfigMenuRun},
+	{(const char *)"Load state: ", &gui_LoadSlot, 9, 0, &gui_LoadState},
+	{(const char *)"Save state: ", &gui_LoadSlot, 9, 0, &gui_SaveState},
+	{(const char *)"Reset", 0, 0, 0, &gui_Reset},
+	{(const char *)"Exit", 0, 0, 0, &handy_sdl_quit} // extern in handy_sdl_main.cpp
 };
 
 MENU gui_MainMenu = { 5, 0, (MENUITEM *)&gui_MainMenuItems };
@@ -231,8 +231,8 @@ void print_string(const char *s, u16 fg_color, u16 bg_color, int x, int y)
 void ShowPreview(MENU *menu)
 {
 	char prename[256];
-	static uint8_t prebuffer[160 * 160 * 2];
-	uint32_t i;
+	/*static uint8_t prebuffer[160 * 160 * 2];*/
+	/*uint32_t i;*/
 	SDL_Rect dst, dst2;
 	SDL_Surface *tmp;
 
@@ -283,7 +283,7 @@ void ShowPreview(MENU *menu)
 			#endif
 			SDL_SoftStretch(Game_Surface_Preview, &dst2, menuSurface, &dst);
 		}
-		//for(int y = 0; y < 102; y++) memcpy((char *)menuSurface->pixels + (24 + y) * 320*2 + 80*2, prebuffer + y * 320, 320);
+		/*for(int y = 0; y < 102; y++) memcpy((char *)menuSurface->pixels + (24 + y) * 320*2 + 80*2, prebuffer + y * 320, 320);*/
 	}
 	else
 	{
@@ -418,8 +418,6 @@ void gui_Init()
 
 void gui_Run()
 {
-	extern int filter; // remove later, temporal hack
-	
 	gui_ClearScreen();
 	gui_MainMenuRun(&gui_MainMenu);
 	gui_ClearScreen();

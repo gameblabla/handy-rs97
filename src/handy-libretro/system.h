@@ -46,8 +46,10 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
+#ifdef WIN32
 #pragma inline_depth (255)
 #pragma inline_recursion (on)
+#endif
 
 #ifdef _LYNXDBG
 

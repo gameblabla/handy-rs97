@@ -93,11 +93,8 @@ inline void sdlemu_video(SDL_Surface *s, SDL_Surface *d)
 
 inline void sdlemu_vidstretch_1(SDL_Surface *s, SDL_Surface *d, int width, int height, int size)
 {
-    register int x=0,y=0, t1 = 0, t2 = 0;
+    register uint32_t x=0,y=0, t1 = 0, t2 = 0;
     Uint32 pixel;
-
-    bool scanline = TRUE;
-
 
     if( size >= 2 )
     {
@@ -143,7 +140,7 @@ inline void sdlemu_vidstretch_2(SDL_Surface *s, SDL_Surface *d, int width, int h
 
 inline void sdlemu_scanline_1(SDL_Surface *s, SDL_Surface *d, int width, int height, int size)
 {
-    register int x=0,y=0, t1 = 0, t2 = 0;
+    register uint32_t x = 0,y = 0, t2 = 0;
     int Scanline_core = 0;
     Uint32 pixel;
 

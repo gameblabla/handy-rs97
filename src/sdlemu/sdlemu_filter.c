@@ -22,8 +22,6 @@ static uint32_t colorMask = 0xF7DEF7DE;
 static uint32_t lowPixelMask = 0x08210821;
 static uint32_t qcolorMask = 0xE79CE79C;
 static uint32_t qlowpixelMask = 0x18631863;
-static uint32_t redblueMask = 0xF81F;
-static uint32_t greenMask = 0x7E0;
 
 #define AVERAGE(z, x) ((((z) & 0xF7DEF7DE) >> 1) + (((x) & 0xF7DEF7DE) >> 1))
 #define AVERAGEHI(AB) ((((AB) & 0xF7DE0000) >> 1) + (((AB) & 0xF7DE) << 15))
@@ -131,7 +129,6 @@ void upscale_160x102_to_320xXXX(uint32_t* restrict dst, uint32_t* restrict src, 
 
 void upscale_160x102_to_320xXXX_noAveraging(uint32_t* restrict dst, uint32_t* restrict src, uint32_t dst_height)
 {
-    uint32_t midh = dst_height / 2;
     uint32_t Eh = 0;
     uint32_t source = 0;
     uint32_t dh = 0;

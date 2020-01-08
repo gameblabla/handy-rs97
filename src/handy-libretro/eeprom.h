@@ -36,7 +36,7 @@ public:
    };
    void SetEEPROMType(UBYTE b);
    int Size(void);
-   int InitFrom(char *data,int count){ memcpy(romdata,data,__min(count,Size()));};
+   void InitFrom(char *data,int count){ memcpy(romdata,data,__min(count,Size()));};
 
    void	Poke(ULONG addr,UBYTE data) { };
    UBYTE	Peek(ULONG addr)

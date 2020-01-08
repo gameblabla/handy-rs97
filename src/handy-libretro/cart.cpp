@@ -314,7 +314,7 @@ CCart::CCart(UBYTE *gamedata,ULONG gamesize)
 	else
 		Invert = 0;
 	
-	printf("\Game CRC : 0%x\n", mycrc);
+	printf("\n Game CRC : 0%x\n", mycrc);
 	
 	/* Some games don't have a proper header or have incorrect controls. */
 	

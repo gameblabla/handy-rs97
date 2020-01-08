@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 #define CHUNK_LENGTH (51)
@@ -240,8 +241,8 @@ int decrypt_frame(unsigned char * result,
       const unsigned char * public_mod,
       const int length)
 {
-   int i, j;
-   int blocks;
+   uint32_t i;
+   uint32_t blocks;
    int accumulator;
    unsigned char* rptr = result;
    const unsigned char* eptr = encrypted;
@@ -279,11 +280,12 @@ void lynx_decrypt(unsigned char * result,
       const unsigned char * encrypted,
       const int length)
 {
-   int blocks = 0;
-   int read_index = 0;
+	/*int blocks = 0;*/
+	int read_index = 0;
 
    /* decrypt the first frame of encrypted data */
-   blocks = decrypt_frame(&result[0],
+   /*blocks =*/ 
+   decrypt_frame(&result[0],
          &encrypted[read_index],
          /* lynx_public_exp */ 0,
          lynx_public_mod,

@@ -26,7 +26,6 @@ void handy_sdl_draw_graphics(void)
 {
 	uint32_t y, pitch;
 	uint16_t *src_draw, *dst_draw;
-	SDL_Rect dst, dst2;
 	
 	if (SDL_LockSurface(mainSurface) == 0)
 	{
