@@ -373,8 +373,6 @@ bool CMikie::ContextSave(FILE *fp)
 
    if(!fwrite(mPalette,sizeof(TPALETTE),16,fp))
       return 0;
-   if(!fwrite(mColourMap,sizeof(ULONG),4096,fp))
-      return 0;
 
    if(!fwrite(&mIODAT,sizeof(ULONG),1,fp))
       return 0;
@@ -583,7 +581,6 @@ bool CMikie::ContextLoad(LSS_FILE *fp)
    if(!lss_read(&mTimerInterruptMask,sizeof(ULONG),1,fp)) return 0;
 
    if(!lss_read(mPalette,sizeof(TPALETTE),16,fp)) return 0;
-   if(!lss_read(mColourMap,sizeof(ULONG),4096,fp)) return 0;
 
    if(!lss_read(&mIODAT,sizeof(ULONG),1,fp)) return 0;
    if(!lss_read(&mIODAT_REST_SIGNAL,sizeof(ULONG),1,fp)) return 0;
