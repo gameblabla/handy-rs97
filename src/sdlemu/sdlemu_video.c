@@ -91,7 +91,7 @@ inline void sdlemu_video(SDL_Surface *s, SDL_Surface *d)
     SDL_BlitSurface( s, &area, d, &area);
 }
 
-inline void sdlemu_vidstretch_1(SDL_Surface *s, SDL_Surface *d, int width, int height, int size)
+inline void sdlemu_vidstretch_1(SDL_Surface *s, SDL_Surface *d, uint32_t width, uint32_t height, uint32_t size)
 {
     register uint32_t x=0,y=0, t1 = 0, t2 = 0;
     Uint32 pixel;
@@ -118,7 +118,7 @@ inline void sdlemu_vidstretch_1(SDL_Surface *s, SDL_Surface *d, int width, int h
         sdlemu_video(s, d);
 }
 
-inline void sdlemu_vidstretch_2(SDL_Surface *s, SDL_Surface *d, int width, int height, int size)
+inline void sdlemu_vidstretch_2(SDL_Surface *s, SDL_Surface *d, uint32_t width, uint32_t height, uint32_t size)
 {
     SDL_Rect src,dest;
 
@@ -138,10 +138,10 @@ inline void sdlemu_vidstretch_2(SDL_Surface *s, SDL_Surface *d, int width, int h
    
 }
 
-inline void sdlemu_scanline_1(SDL_Surface *s, SDL_Surface *d, int width, int height, int size)
+inline void sdlemu_scanline_1(SDL_Surface *s, SDL_Surface *d, uint32_t width, uint32_t height, uint32_t size)
 {
     register uint32_t x = 0,y = 0, t2 = 0;
-    int Scanline_core = 0;
+    uint32_t Scanline_core = 0;
     Uint32 pixel;
 
     for(y=0;y< (height); y++)
@@ -160,10 +160,10 @@ inline void sdlemu_scanline_1(SDL_Surface *s, SDL_Surface *d, int width, int hei
 
 }
 
-inline void sdlemu_scanline_2(SDL_Surface *s, SDL_Surface *d, int width, int height, int size)
+inline void sdlemu_scanline_2(SDL_Surface *s, SDL_Surface *d, uint32_t width, uint32_t height, uint32_t size)
 {
     SDL_Rect src,dest;
-    register int i=0;
+    register uint32_t i=0;
 
     for(i = 0; i < height; i++) {
            src.x = 0;

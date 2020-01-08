@@ -489,7 +489,7 @@ void CSystem::HLE_BIOS_FE4A(void)
 	unsigned char res[256];
 
 	buff[0]=mCart->Peek0();
-	int blockcount = 0x100 -  buff[0];
+	uint32_t blockcount = 0x100 -  buff[0];
 
 	for (uint32_t i = 1; i < 1+51*blockcount; ++i) // first encrypted loader
 	{

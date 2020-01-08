@@ -32,10 +32,10 @@ extern "C" {
 #endif
 
 
-void   sdlemu_vidstretch_1(SDL_Surface *s, SDL_Surface *d, int width, int height, int size);
-void   sdlemu_vidstretch_2(SDL_Surface *s, SDL_Surface *d, int width, int height, int size);
-void   sdlemu_scanline_1(SDL_Surface *s, SDL_Surface *d, int width, int height, int size);
-void   sdlemu_scanline_2(SDL_Surface *s, SDL_Surface *d, int width, int height, int size);
+void   sdlemu_vidstretch_1(SDL_Surface *s, SDL_Surface *d, uint32_t width, uint32_t height, uint32_t size);
+void   sdlemu_vidstretch_2(SDL_Surface *s, SDL_Surface *d, uint32_t width, uint32_t height, uint32_t size);
+void   sdlemu_scanline_1(SDL_Surface *s, SDL_Surface *d, uint32_t width, uint32_t height, uint32_t size);
+void   sdlemu_scanline_2(SDL_Surface *s, SDL_Surface *d, uint32_t width, uint32_t height, uint32_t size);
 void   sdlemu_video(SDL_Surface *s, SDL_Surface *d);
 
 #ifdef __cplusplus

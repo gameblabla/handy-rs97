@@ -110,8 +110,6 @@ inline int handy_sdl_update(void)
         //
         if(gSystemCycleCount > gThrottleNextCycleCheckpoint)
         {
-            static int limiter=0;
-            static int flipflop=0;
             int overrun=gSystemCycleCount-gThrottleNextCycleCheckpoint;
             int nextstep=(((HANDY_SYSTEM_FREQ/HANDY_BASE_FPS)*gThrottleMaxPercentage)/100);
 
@@ -318,10 +316,8 @@ int Throttle = 1;  // Throttle to 60FPS
 
 int main(int argc, char *argv[])
 {
-    uint32_t       i;
+    int i;
     SDL_Event handy_sdl_event;
-    float fps_counter;
-    int       bpp = 16;        // dingux has 16 hardcoded
     char load_filename[512];
     char romname[512];
     

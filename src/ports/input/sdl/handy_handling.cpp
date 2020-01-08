@@ -227,7 +227,9 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 							#endif
 						break;
 						case BT_LEFT: {  // Lynx LEFT
+							#ifndef NOJOYSTICK
 							dpad_pressed[0] = 0;
+							#endif
 							switch(Invert)
 							{
 								case 0:

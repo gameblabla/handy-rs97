@@ -2742,7 +2742,7 @@ UBYTE CMikie::Peek(ULONG addr)
 
 inline void CMikie::Update(void)
       {
-         SLONG divide;
+         SLONG divide = 0;
          SLONG decval;
          ULONG tmp;
          ULONG mikie_work_done=0;
