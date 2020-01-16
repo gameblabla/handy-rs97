@@ -185,7 +185,7 @@ void _splitpath(const char* path, char* drv, char* dir, char* name, char* ext)
 				}
 				else
 				{
-					ptr = strchr(filename_buf, '.');
+					ptr = strrchr(filename_buf, '.');
 					if (ptr != NULL)
 					{
 						char buf[4];
