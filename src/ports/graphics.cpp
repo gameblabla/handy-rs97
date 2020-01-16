@@ -129,7 +129,7 @@ int Handy_Init_Video(uint_fast8_t menu)
 	switch(menu)
 	{
 		case 0:
-			if (LynxRotate == CART_NO_ROTATE)
+			if (mRotation == CART_NO_ROTATE)
 			{
 				mainSurface = SDL_SetVideoMode(160, 102, 16, SDL_FLAGS);
 			}

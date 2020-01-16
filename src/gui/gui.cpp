@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <SDL/SDL.h>
+#include <libgen.h>
 #include <errno.h>
 
 #include "gui.h"
@@ -416,10 +417,6 @@ void gui_MainMenuRun(MENU *menu)
 	SDL_FillRect(mainSurface, NULL, 0);
 	SDL_Flip(mainSurface);
 	#endif
-	
-	#ifdef IPU_SCALE
-	set_keep_aspect_ratio(gui_ImageScaling == 1 ? 0 : 1);
-	#endif
 }
 
 void get_config_path()
@@ -438,6 +435,9 @@ void gui_Run()
 	gui_ClearScreen();
 	gui_MainMenuRun(&gui_MainMenu);
 	gui_ClearScreen();
+	#ifdef IPU_SCALE
+	set_keep_aspect_ratio(gui_ImageScaling == 1 ? 0 : 1);
+	#endif
 }
 
 void gui_ConfigMenuRun()
