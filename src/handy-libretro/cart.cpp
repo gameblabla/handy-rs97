@@ -59,7 +59,6 @@
 int	mRotation;
 extern int Invert;
 extern void Set_Rotation_Game();
-
 CCart::CCart(UBYTE *gamedata,ULONG gamesize)
 {
 	uint32_t mycrc = 0;
@@ -323,34 +322,40 @@ CCart::CCart(UBYTE *gamedata,ULONG gamesize)
 	switch(mycrc)
 	{
 		/* Klax , Rotate to the left */
-		case 0x0ec53a878:
-		case 0x0a53649f1:
+		case 0xec53a878:
+		case 0xA53649F1:
+		case 0xEEBADBE6:
+		case 0x4D5D94F4:
 		/* Gauntlet , Rotate to the left */
-		case 0x08e0908e5:
-		case 0x0c291dd38:
-		case 0x07f0ec7ad:
+		case 0x8e0908e5:
+		case 0xc291dd38:
+		case 0x7f0ec7ad:
 			mRotation = CART_ROTATE_LEFT;
 			Invert = 2;
 		break;
 		
 		/* NFL Football , Rotate to the right */
-		case 0x0c398359e:
-		case 0x06fd398:
+		case 0xc398359e:
+		case 0x6fd398:
 		/* Centipede (Retail) , Rotate to the right */
-		case 0x0e38a0f69:
+		case 0xe38a0f69:
 		/* Centipede (Prototype) , Rotate to the right */
-		case 0x071a2e46:
-		case 0x097501709:
+		case 0x71a2e46:
+		case 0x97501709:
 		/* Lexis , Rotate to the right */
-		case 0x0265710ce:
-		case 0x0271b6e9:
+		case 0x265710ce:
+		case 0x271b6e9:
 		
 		/* Raiden */
-		case 0x0bcd10c3a:
+		case 0xbcd10c3a:
 			mRotation = CART_ROTATE_RIGHT;
 			Invert = 1;
 		break;
 	}
+	
+	#ifdef IPU_SCALE
+	Handy_Change_Res(0);
+	#endif
 }
 
 CCart::~CCart()

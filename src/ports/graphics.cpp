@@ -151,7 +151,6 @@ int Handy_Init_Video(uint_fast8_t menu)
     {
         printf("Could not create primary SDL surface: %s\n", SDL_GetError());
         return 0;
-        
     }
     
     if (menuSurface == NULL)
@@ -171,6 +170,26 @@ int Handy_Init_Video(uint_fast8_t menu)
 
     return 1;
 }
+
+/*
+    This is called also from gui when initializing for rom browser
+*/
+#ifdef IPU_SCALE
+void Handy_Change_Res(uint8_t menu)
+{
+	#ifdef IPU_SCALE
+	if (menu == 1)
+	{
+		mainSurface = SDL_SetVideoMode(SDL_OUTPUT_WIDTH, SDL_OUTPUT_HEIGHT, 16, SDL_FLAGS);
+	}
+	else
+	{
+		if (mRotation == CART_NO_ROTATE) mainSurface = SDL_SetVideoMode(160, 102, 16, SDL_FLAGS);
+		else mainSurface = SDL_SetVideoMode(102, 160, 16, SDL_FLAGS);
+	}
+	#endif
+}
+#endif
 
 /*
     Name                :     handy_sdl_display_callback

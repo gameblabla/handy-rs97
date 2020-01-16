@@ -244,7 +244,7 @@ void handy_sdl_rom_info(void)
     }
     
 	#ifdef IPU_SCALE
-	Handy_Init_Video(0);
+	Handy_Change_Res(0);
 	#endif
 }
 

@@ -82,4 +82,5 @@ inline  void    handy_sdl_draw_filter(int filtertype, SDL_Surface *src, SDL_Surf
 		uint8_t  *handy_sdl_display_callback(ULONG objref);
 		void 	handy_sdl_render_buffer(void);
 		void    handy_sdl_video_close(void);
+extern 	void	Handy_Change_Res(uint8_t menu);
 #endif

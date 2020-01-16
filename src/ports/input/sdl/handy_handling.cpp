@@ -216,11 +216,11 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 						case SDLK_RCTRL:
 						case SDLK_HOME:
 							#ifdef IPU_SCALE
-							Handy_Init_Video(1);
+							Handy_Change_Res(1);
 							#endif
 							gui_Run();
 							#ifdef IPU_SCALE
-							Handy_Init_Video(0);
+							Handy_Change_Res(0);
 							#endif
 							mask = 0;
 							#ifndef NOJOYSTICK
