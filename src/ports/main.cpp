@@ -242,6 +242,10 @@ void handy_sdl_rom_info(void)
             exit(EXIT_FAILURE);
             break;
     }
+    
+	#ifdef IPU_SCALE
+	Handy_Init_Video(0);
+	#endif
 }
 
 void handy_sdl_quit(void)
@@ -372,7 +376,7 @@ int main(int argc, char *argv[])
     handy_sdl_core_init(romname);
 
     // Initialise Handy/SDL video 
-    if(!Handy_Init_Video())
+    if(!Handy_Init_Video(0))
     {
 		SDL_Quit();
         return 1;

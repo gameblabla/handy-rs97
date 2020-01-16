@@ -118,13 +118,34 @@ void handy_sdl_video_init(int bpp)
     printf("[DONE]\n");
 }
 
+#define SDL_FLAGS SDL_HWSURFACE
 
 /*
     This is called also from gui when initializing for rom browser
 */
-int Handy_Init_Video()
+int Handy_Init_Video(uint_fast8_t menu)
 {
-	mainSurface = SDL_SetVideoMode(SDL_OUTPUT_WIDTH, SDL_OUTPUT_HEIGHT, 16, SDL_HWSURFACE);
+	#ifdef IPU_SCALE
+	switch(menu)
+	{
+		case 0:
+			if (LynxRotate == CART_NO_ROTATE)
+			{
+				mainSurface = SDL_SetVideoMode(160, 102, 16, SDL_FLAGS);
+			}
+			else
+			{
+				mainSurface = SDL_SetVideoMode(102, 160, 16, SDL_FLAGS);
+			}
+		break;
+		case 1:
+			mainSurface = SDL_SetVideoMode(SDL_OUTPUT_WIDTH, SDL_OUTPUT_HEIGHT, 16, SDL_FLAGS);
+		break;
+	}
+	#else
+	if (mainSurface) return 1;
+	mainSurface = SDL_SetVideoMode(SDL_OUTPUT_WIDTH, SDL_OUTPUT_HEIGHT, 16, SDL_FLAGS);
+	#endif
 	
     if (mainSurface == NULL)
     {
@@ -133,12 +154,15 @@ int Handy_Init_Video()
         
     }
     
-	menuSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, MENU_OUTPUT_WIDTH, MENU_OUTPUT_HEIGHT, SDL_BPP, 0, 0, 0, 0);
     if (menuSurface == NULL)
-    {
-        printf("Could not create primary SDL surface: %s\n", SDL_GetError());
-        return 0;
-    }
+	{
+		menuSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, MENU_OUTPUT_WIDTH, MENU_OUTPUT_HEIGHT, SDL_BPP, 0, 0, 0, 0);
+		if (menuSurface == NULL)
+		{
+			printf("Could not create primary SDL surface: %s\n", SDL_GetError());
+			return 0;
+		}
+	}
     
     SDL_EnableKeyRepeat( 0, 0); // Best options to use
     SDL_ShowCursor( 0 ); // Removing mouse from window. Very handy in fullscreen mode :)

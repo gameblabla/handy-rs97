@@ -120,6 +120,19 @@ MENUITEM gui_ConfigMenuItems[] = {
 
 MENU gui_ConfigMenu = { 2, 0, (MENUITEM *)&gui_ConfigMenuItems };
 
+/* Obviously this is OpenDingux only - Gameblabla */
+#ifdef IPU_SCALE
+static const char *KEEP_ASPECT_FILENAME = "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio";
+static inline void set_keep_aspect_ratio(uint_fast8_t n)
+{
+	FILE *f = fopen(KEEP_ASPECT_FILENAME, "wb");
+	if (!f) return;
+	char c = n ? 'Y' : 'N';
+	fwrite(&c, 1, 1, f);
+	fclose(f);
+}
+#endif
+
 /*
 	Clears mainSurface
 */
@@ -346,7 +359,7 @@ void ShowMenu(MENU *menu)
 	print_string("[B] = Return to game", COLOR_HELP_TEXT, COLOR_BG, 4, 158-8);
 	#else
 	print_string("Press B to return to the game", COLOR_HELP_TEXT, COLOR_BG, 56, 220);
-	print_string("Handy RS-97 libretro", COLOR_HELP_TEXT, COLOR_BG, 80, 2);
+	print_string("Handy libretro " __DATE__ " build", COLOR_HELP_TEXT, COLOR_BG, 40, 2);
 	print_string("Port by gameblabla", COLOR_HELP_TEXT, COLOR_BG, 80, 12);
 	#endif
 }
@@ -402,6 +415,10 @@ void gui_MainMenuRun(MENU *menu)
 	#ifdef SDL_TRIPLEBUF
 	SDL_FillRect(mainSurface, NULL, 0);
 	SDL_Flip(mainSurface);
+	#endif
+	
+	#ifdef IPU_SCALE
+	set_keep_aspect_ratio(gui_ImageScaling == 1 ? 0 : 1);
 	#endif
 }
 

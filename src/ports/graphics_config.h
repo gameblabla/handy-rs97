@@ -1,19 +1,7 @@
 #ifndef GRAPHICS_CONFIG_H
 #define GRAPHICS_CONFIG_H
 
-#ifdef RS97
-
-	#define SDL_OUTPUT_WIDTH 320
-	#define SDL_OUTPUT_HEIGHT 240
-	
-	#define MENU_OUTPUT_WIDTH 320
-	#define MENU_OUTPUT_HEIGHT 240
-	
-	#define OUTPUT_WIDTH 320
-	#define OUTPUT_HEIGHT 240
-	#define SDL_BPP 16
-	
-#elif defined(RS90)
+#if defined(RS90)
 
 	#define SDL_OUTPUT_WIDTH 240
 	#define SDL_OUTPUT_HEIGHT 160

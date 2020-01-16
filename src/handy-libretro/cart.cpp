@@ -52,6 +52,7 @@
 #include <string.h>
 #include "system.h"
 #include "cart.h"
+#include "handy_sdl_graphics.h"
 //#include "zlib.h"
 #include "scrc32.h"
 
@@ -315,7 +316,7 @@ CCart::CCart(UBYTE *gamedata,ULONG gamesize)
 	else
 		Invert = 0;
 	
-	printf("\n Game CRC : 0%x\n", mycrc);
+	printf("\n Game CRC : 0x%x\n", mycrc);
 	
 	/* Some games don't have a proper header or have incorrect controls. */
 	
@@ -323,21 +324,29 @@ CCart::CCart(UBYTE *gamedata,ULONG gamesize)
 	{
 		/* Klax , Rotate to the left */
 		case 0x0ec53a878:
+		case 0x0a53649f1:
 		/* Gauntlet , Rotate to the left */
 		case 0x08e0908e5:
 		case 0x0c291dd38:
+		case 0x07f0ec7ad:
 			mRotation = CART_ROTATE_LEFT;
 			Invert = 2;
 		break;
 		
 		/* NFL Football , Rotate to the right */
 		case 0x0c398359e:
+		case 0x06fd398:
 		/* Centipede (Retail) , Rotate to the right */
 		case 0x0e38a0f69:
 		/* Centipede (Prototype) , Rotate to the right */
 		case 0x071a2e46:
+		case 0x097501709:
 		/* Lexis , Rotate to the right */
 		case 0x0265710ce:
+		case 0x0271b6e9:
+		
+		/* Raiden */
+		case 0x0bcd10c3a:
 			mRotation = CART_ROTATE_RIGHT;
 			Invert = 1;
 		break;

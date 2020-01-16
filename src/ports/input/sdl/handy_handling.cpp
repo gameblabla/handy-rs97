@@ -65,7 +65,7 @@
 
 #include "handy_sdl_main.h"
 #include "handy_sdl_handling.h"
-
+#include "handy_sdl_graphics.h"
 
 extern int Invert;
 extern int gui_SwapAB;
@@ -215,7 +215,13 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 						case SDLK_END:
 						case SDLK_RCTRL:
 						case SDLK_HOME:
+							#ifdef IPU_SCALE
+							Handy_Init_Video(1);
+							#endif
 							gui_Run();
+							#ifdef IPU_SCALE
+							Handy_Init_Video(0);
+							#endif
 							mask = 0;
 							#ifndef NOJOYSTICK
 							x_move = 0;
@@ -409,7 +415,7 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 				mask |= BUTTON_DOWN;
 			else if(x_move < -AXIS_JOYSTICK)
 				mask |= BUTTON_UP;
-			else if (dpad_pressed[2] == 0 && dpad_pressed[3] == 0)
+			else if (dpad_pressed[0] == 0 && dpad_pressed[1] == 0)
 			{
 				mask &= ~BUTTON_UP;
 				mask &= ~BUTTON_DOWN;
@@ -419,7 +425,7 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 				mask |= BUTTON_LEFT;
 			else if(y_move < -AXIS_JOYSTICK)
 				mask |= BUTTON_RIGHT;
-			else if (dpad_pressed[0] == 0 && dpad_pressed[1] == 0)
+			else if (dpad_pressed[2] == 0 && dpad_pressed[3] == 0)
 			{
 				mask &= ~BUTTON_RIGHT;
 				mask &= ~BUTTON_LEFT;
@@ -430,7 +436,7 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 		case 2:
 			if (x_move > AXIS_JOYSTICK) mask |= BUTTON_UP;
 			else if (x_move < -AXIS_JOYSTICK) mask |= BUTTON_DOWN;
-			else if (dpad_pressed[2] == 0 && dpad_pressed[3] == 0)
+			else if (dpad_pressed[0] == 0 && dpad_pressed[1] == 0)
 			{
 				mask &= ~BUTTON_UP;
 				mask &= ~BUTTON_DOWN;
@@ -438,7 +444,7 @@ uint32_t Joystick_Down(uint32_t mask, SDL_Event event)
 
 			if (y_move > AXIS_JOYSTICK) mask |= BUTTON_RIGHT;
 			else if (y_move < -AXIS_JOYSTICK) mask |= BUTTON_LEFT;
-			else if (dpad_pressed[0] == 0 && dpad_pressed[1] == 0)
+			else if (dpad_pressed[2] == 0 && dpad_pressed[3] == 0)
 			{
 				mask &= ~BUTTON_RIGHT;
 				mask &= ~BUTTON_LEFT;
