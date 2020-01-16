@@ -72,7 +72,7 @@ extern  void    handy_sdl_draw_graphics(void);
 }
 #endif
 
-extern int Handy_Init_Video(uint_fast8_t menu);
+extern int Handy_Init_Video();
 
 inline	void    handy_sdl_scale(void);
 inline  void    handy_sdl_draw_filter(int filtertype, SDL_Surface *src, SDL_Surface *dst, Uint8 *delta);

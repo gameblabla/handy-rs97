@@ -376,7 +376,7 @@ int main(int argc, char *argv[])
     handy_sdl_core_init(romname);
 
     // Initialise Handy/SDL video 
-    if(!Handy_Init_Video(0))
+    if(!Handy_Init_Video())
     {
 		SDL_Quit();
         return 1;
