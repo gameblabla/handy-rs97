@@ -29,6 +29,10 @@ void handy_sdl_draw_graphics(void)
 	dst.y = Cut_Off_Y;
 	dst.w = LynxWidth;
 	dst.h = LynxHeight;
-	
+
+	#ifdef OPENDINGUX_GCD_16PIXELS_ISSUE
+	SDL_SoftStretch(HandyBuffer, &dst, mainSurface, NULL);
+	#else
 	SDL_BlitSurface(HandyBuffer, &dst, mainSurface, NULL);
+	#endif
 }

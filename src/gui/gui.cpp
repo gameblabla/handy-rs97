@@ -17,7 +17,7 @@
 
 
 */
-
+#include <cassert>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -121,18 +121,6 @@ MENUITEM gui_ConfigMenuItems[] = {
 
 MENU gui_ConfigMenu = { 2, 0, (MENUITEM *)&gui_ConfigMenuItems };
 
-/* Obviously this is OpenDingux only - Gameblabla */
-#ifdef IPU_SCALE
-static const char *KEEP_ASPECT_FILENAME = "/sys/devices/platform/jz-lcd.0/keep_aspect_ratio";
-static inline void set_keep_aspect_ratio(uint_fast8_t n)
-{
-	FILE *f = fopen(KEEP_ASPECT_FILENAME, "wb");
-	if (!f) return;
-	char c = n ? 'Y' : 'N';
-	fwrite(&c, 1, 1, f);
-	fclose(f);
-}
-#endif
 
 /*
 	Clears mainSurface
@@ -336,12 +324,12 @@ void ShowMenu(MENU *menu)
 	MENUITEM *mi = menu->m;
 
 	// clear buffer
+	assert(menuSurface);
 	SDL_FillRect(menuSurface, NULL, COLOR_BG);
 
 	// show menu lines
 	for(i = 0; i < menu->itemNum; i++, mi++) {
 		int fg_color;
-
 		if(menu->itemCur == i) fg_color = COLOR_ACTIVE_ITEM; else fg_color = COLOR_INACTIVE_ITEM;
 	#ifdef RS90
 		ShowMenuItem(56, (13 + i) * 8, mi, fg_color);
@@ -435,9 +423,6 @@ void gui_Run()
 	gui_ClearScreen();
 	gui_MainMenuRun(&gui_MainMenu);
 	gui_ClearScreen();
-	#ifdef IPU_SCALE
-	set_keep_aspect_ratio(gui_ImageScaling == 1 ? 0 : 1);
-	#endif
 }
 
 void gui_ConfigMenuRun()

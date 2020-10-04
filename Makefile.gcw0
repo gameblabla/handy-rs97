@@ -1,10 +1,11 @@
 PRGNAME     = handy
-CC			= /opt/gcw0-toolchain-static/usr/bin/mipsel-linux-gcc
-CXX 		= /opt/gcw0-toolchain-static/usr/bin/mipsel-linux-g++
+CC			= /opt/gcw0-toolchain/usr/bin/mipsel-linux-gcc
+CXX 		= /opt/gcw0-toolchain/usr/bin/mipsel-linux-g++
 
 PORT = gcw0
 SOUND_OUTPUT = alsa
-PROFILE = 0
+PROFILE = APPLY
+HUGE_PAGES = 1
 
 SRCDIR		= ./src/ ./src/gui/ ./src/handy-libretro src/ports ./src/ports/input/sdl src/sdlemu ./src/unzip
 VPATH		= $(SRCDIR)
@@ -14,8 +15,8 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -fno-common -flto -fwhole-program -fsingle-precision-constant -march=mips32r2 -mtune=mips32r2 -fno-PIC -mno-abicalls
-CFLAGS		+= -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH -D$(PORT) -DIPU_SCALE
+CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -fno-common -mframe-header-opt -flto -fsingle-precision-constant -march=mips32r2 -mtune=mips32r2
+CFLAGS		+= -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH -D$(PORT) -DIPU_SCALE -DOPENDINGUX_GCD_16PIXELS_ISSUE
 CFLAGS		+= -I./src -I./src/handy-libretro -I./src/sdlemu -Isrc/ports -Isrc/ports/sound -Isrc/ports/sound -Isrc/ports/input/sdl
 
 ifeq ($(PORT), rs90)
@@ -39,13 +40,21 @@ SRCDIR		+= ./src/ports/sound/libao
 endif
 
 ifeq ($(PROFILE), YES)
-CFLAGS 		+= -fprofile-generate=/media/data/local/home/handy_gcda
+CFLAGS 		+= -fprofile-generate=/usr/local/home
 else ifeq ($(PROFILE), APPLY)
 CFLAGS		+= -fprofile-use -fbranch-probabilities
 endif
 
-CXXFLAGS	= $(CFLAGS)
+CXXFLAGS = $(CFLAGS)
+
+ifeq ($(HUGE_PAGES), 0)
+LDFLAGS		= -nodefaultlibs
+endif
 LDFLAGS     =  -lc -lstdc++ -lgcc -lm -lSDL -lz -Wl,--as-needed -Wl,--gc-sections -s -flto
+ifeq ($(HUGE_PAGES), 1)
+LDFLAGS		+= -Wl,-zcommon-page-size=2097152 -Wl,-zmax-page-size=2097152 -lhugetlbfs
+endif
+
 
 ifeq ($(SOUND_OUTPUT), portaudio)
 LDFLAGS		+= -lportaudio
@@ -60,6 +69,9 @@ endif
 # Rules to make executable
 $(PRGNAME): $(OBJS)  
 	$(CC) $(CFLAGS)  -o $(PRGNAME) $^ $(LDFLAGS)
+ifeq ($(HUGE_PAGES), 1)
+	hugeedit --text --data $(PRGNAME)
+endif
 
 $(OBJ_C) : %.o : %.c
 	$(CC) $(CFLAGS) -std=gnu99 -c -o $@ $<

@@ -125,23 +125,21 @@ void handy_sdl_video_init(int bpp)
 */
 int Handy_Init_Video()
 {
-	if (mainSurface) return 1;
-	mainSurface = SDL_SetVideoMode(SDL_OUTPUT_WIDTH, SDL_OUTPUT_HEIGHT, 16, SDL_FLAGS);
-	
-    if (mainSurface == NULL)
-    {
-        printf("Could not create primary SDL surface: %s\n", SDL_GetError());
-        return 0;
-    }
-    
-    if (menuSurface == NULL)
+	if (!mainSurface)
 	{
-		menuSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, MENU_OUTPUT_WIDTH, MENU_OUTPUT_HEIGHT, SDL_BPP, 0, 0, 0, 0);
-		if (menuSurface == NULL)
+		mainSurface = SDL_SetVideoMode(SDL_OUTPUT_WIDTH, SDL_OUTPUT_HEIGHT, 16, SDL_FLAGS);
+		if (!mainSurface)
 		{
 			printf("Could not create primary SDL surface: %s\n", SDL_GetError());
 			return 0;
 		}
+	}
+   
+	menuSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, MENU_OUTPUT_WIDTH, MENU_OUTPUT_HEIGHT, SDL_BPP, 0, 0, 0, 0);
+	if (!menuSurface)
+	{
+		printf("Could not create primary SDL surface: %s\n", SDL_GetError());
+		return 0;
 	}
     
     SDL_EnableKeyRepeat( 0, 0); // Best options to use
@@ -158,17 +156,30 @@ int Handy_Init_Video()
 #ifdef IPU_SCALE
 void Handy_Change_Res(uint8_t menu)
 {
-	#ifdef IPU_SCALE
+	#ifdef OPENDINGUX_GCD_16PIXELS_ISSUE
+	const uint_fast32_t height_res = 112;
+	#else
+	const uint_fast32_t height_res = 102;
+	#endif
+	
+	if (mainSurface) SDL_FreeSurface(mainSurface);
+	
 	if (menu == 1)
 	{
 		mainSurface = SDL_SetVideoMode(SDL_OUTPUT_WIDTH, SDL_OUTPUT_HEIGHT, 16, SDL_FLAGS);
 	}
 	else
 	{
-		if (mRotation == CART_NO_ROTATE) mainSurface = SDL_SetVideoMode(160, 102, 16, SDL_FLAGS);
-		else mainSurface = SDL_SetVideoMode(102, 160, 16, SDL_FLAGS);
+		if (mRotation == CART_NO_ROTATE) mainSurface = SDL_SetVideoMode(160, height_res, 16, SDL_FLAGS);
+		else mainSurface = SDL_SetVideoMode(height_res, 160, 16, SDL_FLAGS);
 	}
-	#endif
+	
+	if (!mainSurface)
+	{
+		printf("Invalid Resolution being set or SDL error\n");
+		printf("Could not create primary SDL surface: %s\n", SDL_GetError());
+		exit(1);
+	}
 }
 #endif
 

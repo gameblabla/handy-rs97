@@ -1,11 +1,9 @@
 #!/bin/sh
 
-mkdir -p ipkg/home/retrofw/emus/handy
-mkdir -p ipkg/home/retrofw/apps/gmenu2x/sections/emulators
-cp handy ipkg/home/retrofw/emus/handy/handy
-cp handy.png ipkg/home/retrofw/emus/handy/handy.png
-
-cd ipkg
+mkdir -p opk
+cp ./handy opk/handy
+cp ./handy.png opk/icon.png
+cp ./docs/license opk/COPYING
 
 # https://unix.stackexchange.com/questions/219268/how-to-add-new-lines-when-using-echo
 print()
@@ -18,30 +16,17 @@ esac
 
 # Create GmenuNx entry file plus other things
 
-print 'Package: handy
-Version: 20190219
-Description: Atari Lynx emulator
-Section: emus
-Priority: optional
-Maintainer: gameblabla
-Architecture: mipsel
-Homepage: https://github.com/gameblabla/handy
-Depends:
-Source: https://github.com/gameblabla/handy' > control
+print '[Desktop Entry]
+Type=Application
+Name=Handy
+Comment=Atari Lynx emulator
+Exec=handy %f
+Icon=icon
+Terminal=false
+Type=Application
+Categories=emulators;
+X-OD-NeedsDownscaling=false' > opk/default."$1".desktop
 
-print '2.0' > debian-binary
+mksquashfs ./opk handy_"$1".opk -all-root -noappend -no-exports -no-xattrs
 
-print 'title=Handy
-description=Atari Lynx Emulator
-exec=/home/retrofw/emus/handy/handy
-clock=600
-selectordir=/home/retrofw/roms
-selectorfilter=.lnx,.bin,.zip
-' > home/retrofw/apps/gmenu2x/sections/emulators/handy
-
-tar -czvf control.tar.gz control --owner=0 --group=0
-tar -czvf data.tar.gz home --owner=0 --group=0
-ar rv ../handy.ipk control.tar.gz data.tar.gz debian-binary
-
-cd ..
-rm -r ipkg
+rm -r opk
