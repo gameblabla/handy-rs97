@@ -14,7 +14,8 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fno-common -flto -fwhole-program -fsingle-precision-constant -mips32 -fno-PIC -mno-abicalls
+CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fno-common -flto -fsingle-precision-constant -march=mips32 -mtune=mips32
+CFLAGS		+= -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1
 CFLAGS		+= -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH
 CFLAGS		+= -I./src -I./src/handy-libretro -I./src/sdlemu -Isrc/ports -Isrc/ports/sound -Isrc/ports/sound -Isrc/ports/input/sdl
 
@@ -39,13 +40,13 @@ SRCDIR		+= ./src/ports/sound/libao
 endif
 
 ifeq ($(PROFILE), YES)
-CFLAGS 		+= -fprofile-generate="/media/QEMU VVFAT"
+CFLAGS 		+= -fprofile-generate="/media/data/local/home"
 else ifeq ($(PROFILE), APPLY)
 CFLAGS		+= -fprofile-use -fbranch-probabilities
 endif
 
 CXXFLAGS	= $(CFLAGS) -fpermissive
-LDFLAGS     = -nodefaultlibs -lc -lstdc++ -lgcc -lm -lSDL -lz -no-pie -Wl,--as-needed -Wl,--gc-sections -s -flto
+LDFLAGS     = -lc -lgcc -lstdc++ -lm -lSDL -lz -no-pie -Wl,--as-needed -Wl,--gc-sections -s -flto
 
 ifeq ($(PROFILE), YES)
 LDFLAGS		+= -lgcov
