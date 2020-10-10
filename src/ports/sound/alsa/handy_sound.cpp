@@ -70,7 +70,11 @@ int handy_audio_init(void)
 	
 	rc = snd_config_update_free_global();
 	
+#ifdef NONBLOCKING_AUDIO
+	snd_pcm_nonblock(handle, 1);
+#else
 	snd_pcm_nonblock(handle, 0);
+#endif
 	
 	/* Allocate a hardware parameters object. */
 	snd_pcm_hw_params_alloca(&params);

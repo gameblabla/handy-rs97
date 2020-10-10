@@ -68,6 +68,8 @@
 #include "sdlemu/sdlemu_filter.h"
 #include "gui/gui.h"
 
+#include "shared_config.h"
+
 extern SDL_Joystick* joystick;
 extern SDL_Surface* menuSurface;
 
@@ -117,8 +119,6 @@ void handy_sdl_video_init(int bpp)
 
     printf("[DONE]\n");
 }
-
-#define SDL_FLAGS SDL_HWSURFACE
 
 /*
     This is called also from gui when initializing for rom browser

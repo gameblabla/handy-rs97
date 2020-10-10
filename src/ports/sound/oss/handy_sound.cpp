@@ -21,9 +21,9 @@
 //
 
 #include <sys/ioctl.h>
-#include <sys/fcntl.h>
-#include <unistd.h>
 #include <sys/soundcard.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -47,7 +47,11 @@ int handy_audio_init(void)
 	uint32_t err_ret;
 	
 	printf("\nOpening DSP device\n");
-	oss_audio_fd = open("/dev/dsp", O_WRONLY);
+	oss_audio_fd = open("/dev/dsp", O_WRONLY
+#ifdef NONBLOCKING_AUDIO
+	| O_NONBLOCK
+#endif
+	);
 	if (oss_audio_fd < 0)
 	{
 		printf("Couldn't open /dev/dsp.\n");

@@ -62,7 +62,7 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_main.h>
 #include <SDL/SDL_timer.h>
-#include "graphics_config.h"
+#include "shared_config.h"
 
 #ifdef __cplusplus
 extern "C" {

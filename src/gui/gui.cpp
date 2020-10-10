@@ -115,11 +115,17 @@ MENUITEM gui_MainMenuItems[] = {
 MENU gui_MainMenu = { 5, 0, (MENUITEM *)&gui_MainMenuItems };
 
 MENUITEM gui_ConfigMenuItems[] = {
+#ifndef IPU_SCALE
 	{(const char *)"Upscale  : ", &gui_ImageScaling, 1, (const char **)&gui_ScaleNames, NULL},
+#endif
 	{(const char *)"Swap A/B : ", &gui_SwapAB, 1, (const char **)&gui_YesNo, NULL}
 };
 
-MENU gui_ConfigMenu = { 2, 0, (MENUITEM *)&gui_ConfigMenuItems };
+MENU gui_ConfigMenu = { 2
+	#ifdef IPU_SCALE
+	-1
+	#endif
+, 0, (MENUITEM *)&gui_ConfigMenuItems };
 
 
 /*
@@ -130,7 +136,7 @@ void gui_ClearScreen()
 	uint8_t i;
 	for(i=0;i<3;i++)
 	{
-		SDL_FillRect(mainSurface,NULL,SDL_MapRGBA(mainSurface->format, 0, 0, 0, 255));
+		SDL_FillRect(mainSurface,NULL,SDL_MapRGB(mainSurface->format, 0, 0, 0));
 		SDL_Flip(mainSurface);
 	}
 }

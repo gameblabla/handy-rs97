@@ -8,7 +8,7 @@
 #include <SDL/SDL_main.h>
 
 #include "sdlemu/sdlemu_filter.h"
-#include "graphics_config.h"
+#include "shared_config.h"
 #include "gui/gui.h"
 
 extern SDL_Surface *mainSurface, *HandyBuffer;
