@@ -2,7 +2,7 @@ PRGNAME     = handy
 CC			= gcc
 CXX			= g++
 
-PORT = rs90
+PORT = GCW0
 SOUND_OUTPUT = alsa
 PROFILE = 0
 
@@ -18,25 +18,9 @@ CFLAGS		= -O0 -g -fpermissive
 CFLAGS		+= -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH -D$(PORT)
 CFLAGS		+= -I./src -I./src/handy-libretro -I./src/sdlemu -Isrc/ports -Isrc/ports/sound -Isrc/ports/sound -Isrc/ports/input/sdl
 
-ifeq ($(PORT), rs90)
-CFLAGS 		+= -DRS90
-else ifeq  ($(PORT), rs97)
-CFLAGS 		+= -DRS97
-else ifeq  ($(PORT), retrostone)
-CFLAGS 		+= -DRETROSTONE
-endif
-
+CFLAGS 		+= -D$(PORT)
 SRCDIR		+= ./src/ports/graphics/$(PORT)
-
-ifeq ($(SOUND_OUTPUT), alsa)
-SRCDIR		+= ./src/ports/sound/alsa
-else ifeq ($(SOUND_OUTPUT), oss)
-SRCDIR		+= ./src/ports/sound/oss
-else ifeq ($(SOUND_OUTPUT), portaudio)
-SRCDIR		+= ./src/ports/sound/portaudio
-else ifeq ($(SOUND_OUTPUT), libao)
-SRCDIR		+= ./src/ports/sound/libao
-endif
+SRCDIR		+= ./src/ports/sound/$(SOUND_OUTPUT)
 
 ifeq ($(PROFILE), YES)
 CFLAGS 		+= -fprofile-generate=/home/retrofw/profile
@@ -45,7 +29,7 @@ CFLAGS		+= -fprofile-use -fbranch-probabilities
 endif
 
 CXXFLAGS	= $(CFLAGS)
-LDFLAGS     = -nodefaultlibs -lc -lstdc++ -lgcc -lgcc_s -lm -lSDL -lz -no-pie -Wl,--as-needed -Wl,--gc-sections -s -flto
+LDFLAGS     = -nodefaultlibs -lc -lstdc++ -lgcc -lgcc_s -lm -lSDL -lz -no-pie -Wl,--as-needed -Wl,--gc-sections -flto
 
 ifeq ($(SOUND_OUTPUT), portaudio)
 LDFLAGS		+= -lportaudio

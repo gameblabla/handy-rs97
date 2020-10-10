@@ -2,7 +2,7 @@ PRGNAME     = handy
 CC			= /opt/gcw0-toolchain/usr/bin/mipsel-linux-gcc
 CXX 		= /opt/gcw0-toolchain/usr/bin/mipsel-linux-g++
 
-PORT = gcw0
+PORT = GCW0
 SOUND_OUTPUT = alsa
 PROFILE = APPLY
 HUGE_PAGES = 1
@@ -16,28 +16,12 @@ OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
 CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -fno-common -mframe-header-opt -flto -fsingle-precision-constant -march=mips32r2 -mtune=mips32r2
-CFLAGS		+= -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH -D$(PORT) -DIPU_SCALE -DOPENDINGUX_GCD_16PIXELS_ISSUE
+CFLAGS		+= -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH -D$(PORT) -DOPENDINGUX_GCD_16PIXELS_ISSUE
 CFLAGS		+= -I./src -I./src/handy-libretro -I./src/sdlemu -Isrc/ports -Isrc/ports/sound -Isrc/ports/sound -Isrc/ports/input/sdl
 
-ifeq ($(PORT), rs90)
-CFLAGS 		+= -DRS90
-else ifeq  ($(PORT), rs97)
-CFLAGS 		+= -DRS97
-else ifeq  ($(PORT), retrostone)
-CFLAGS 		+= -DRETROSTONE
-endif
-
+CFLAGS 		+= -D$(PORT)
 SRCDIR		+= ./src/ports/graphics/$(PORT)
-
-ifeq ($(SOUND_OUTPUT), alsa)
-SRCDIR		+= ./src/ports/sound/alsa
-else ifeq ($(SOUND_OUTPUT), oss)
-SRCDIR		+= ./src/ports/sound/oss
-else ifeq ($(SOUND_OUTPUT), portaudio)
-SRCDIR		+= ./src/ports/sound/portaudio
-else ifeq ($(SOUND_OUTPUT), libao)
-SRCDIR		+= ./src/ports/sound/libao
-endif
+SRCDIR		+= ./src/ports/sound/$(SOUND_OUTPUT)
 
 ifeq ($(PROFILE), YES)
 CFLAGS 		+= -fprofile-generate=/usr/local/home

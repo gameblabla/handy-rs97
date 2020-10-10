@@ -2,7 +2,7 @@ PRGNAME     = handy
 CC			= /opt/rs90-toolchain/bin/mipsel-linux-gcc
 CXX 		= /opt/rs90-toolchain/bin/mipsel-linux-g++
 
-PORT = rs90
+PORT = RS90
 SOUND_OUTPUT = alsa
 PROFILE = APPLY
 
@@ -14,30 +14,14 @@ OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
 OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
 OBJS		= $(OBJ_C) $(OBJ_CP)
 
-CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fno-common -flto -fsingle-precision-constant -march=mips32 -mtune=mips32
+CFLAGS		= -Ofast -fdata-sections -ffunction-sections -mno-fp-exceptions -mno-check-zero-division -mframe-header-opt -fno-common -flto -fsingle-precision-constant -march=mips32 -mtune=mips32 -mplt
 CFLAGS		+= -falign-functions=1 -falign-jumps=1 -falign-loops=1 -falign-labels=1
 CFLAGS		+= -DWANT_CRC32 -DANSI_GCC -DSDL_PATCH
 CFLAGS		+= -I./src -I./src/handy-libretro -I./src/sdlemu -Isrc/ports -Isrc/ports/sound -Isrc/ports/sound -Isrc/ports/input/sdl
 
-ifeq ($(PORT), rs90)
-CFLAGS 		+= -DRS90
-else ifeq  ($(PORT), rs97)
-CFLAGS 		+= -DRS97
-else ifeq  ($(PORT), retrostone)
-CFLAGS 		+= -DRETROSTONE
-endif
-
+CFLAGS 		+= -D$(PORT)
 SRCDIR		+= ./src/ports/graphics/$(PORT)
-
-ifeq ($(SOUND_OUTPUT), alsa)
-SRCDIR		+= ./src/ports/sound/alsa
-else ifeq ($(SOUND_OUTPUT), oss)
-SRCDIR		+= ./src/ports/sound/oss
-else ifeq ($(SOUND_OUTPUT), portaudio)
-SRCDIR		+= ./src/ports/sound/portaudio
-else ifeq ($(SOUND_OUTPUT), libao)
-SRCDIR		+= ./src/ports/sound/libao
-endif
+SRCDIR		+= ./src/ports/sound/$(SOUND_OUTPUT)
 
 ifeq ($(PROFILE), YES)
 CFLAGS 		+= -fprofile-generate="/media/data/local/home"
